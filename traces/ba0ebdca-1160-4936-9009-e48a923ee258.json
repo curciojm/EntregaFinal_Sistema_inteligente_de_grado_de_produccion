@@ -1,0 +1,21 @@
+[
+  {
+    "tipo": "HumanMessage",
+    "contenido": "\n    Quiero que evalúes la siguiente respuesta de un estudiante.\n\n    Pregunta: ¿Qué es la correlación?\n\n    Respuesta del estudiante:\n    \"La correlacion consiste en el calculo de un promedio entre dos grupos distintos \"\n    \"para ver que grupo tiene mayor promedio\"\n\n    Indicá si la respuesta es correcta y justificá brevemente\n    la evaluación.\n    "
+  },
+  {
+    "tipo": "AIMessage",
+    "contenido": "Evaluación: Incompleta\n\nLa respuesta del estudiante es incorrecta porque confunde la correlación con la comparación de promedios entre dos grupos distintos (lo cual se asemeja más a pruebas de hipótesis para diferencias de medias, como una prueba t). \n\nLa correlación no busca comparar grupos, sino analizar la dirección y el grado o magnitud de la relación entre dos variables medidas en los mismos sujetos u observaciones (por ejemplo, evaluando un coeficiente como $r$). \n\nPara comprenderlo mejor, podemos pensar en un ejemplo que involucre **niveles de ansiedad** y **frecuencia de palabras recordadas**: en lugar de comparar el promedio de un grupo contra otro, un estudio correlacional analizaría si, a medida que aumentan o disminuyen los niveles de ansiedad en los participantes, la frecuencia de palabras recordadas cambia de manera sistemática (por ejemplo, si a mayor ansiedad menor cantidad de palabras recordadas).\n\nPuedes consultar más detalles sobre este tema en *Pagano (2006), Estadística para las ciencias del comportamiento* (página 9 en adelante).",
+    "agente": "evaluador"
+  },
+  {
+    "tipo": "AIMessage",
+    "contenido": "**Evaluación:** Incorrecta\n\n**Justificación:** \nLa respuesta del estudiante es incorrecta porque confunde la correlación con la comparación de promedios entre dos grupos distintos (lo cual se asemeja más a una prueba de hipótesis para diferencias de medias). \n\nLa correlación no busca comparar grupos, sino analizar la dirección y el grado o magnitud de la **relación entre dos variables** medidas en las mismas observaciones (por ejemplo, evaluar si a medida que una variable aumenta, la otra tiende a aumentar o disminuir). \n\nPuedes consultar más detalles sobre este tema en *Pagano (2006), Estadística para las ciencias del comportamiento*.",
+    "agente": "sintesis"
+  },
+  {
+    "tipo": "HumanApproval",
+    "decision": "approve",
+    "feedback": "Continuá con la evaluación de la respuesta agrega un ejemplo que involucre niveles de ansiedad y frecuencia de palabras recordadas"
+  }
+]

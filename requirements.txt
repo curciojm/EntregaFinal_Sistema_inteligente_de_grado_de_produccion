@@ -11,6 +11,8 @@ langchain-core
 langgraph
 langgraph-checkpoint-redis
 langchain-community
+langchain-huggingface
+langchain-pinecone
 
 # Modelos LLM
 langchain-google-genai

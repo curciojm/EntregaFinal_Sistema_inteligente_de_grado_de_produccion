@@ -1,0 +1,21 @@
+[
+  {
+    "tipo": "HumanMessage",
+    "contenido": "\n    Quiero que evalúes la siguiente respuesta de un estudiante.\n\n    Pregunta: ¿Qué es la correlación?\n\n    Respuesta del estudiante:\n    \"La correlacion consiste en el calculo de un promedio entre dos grupos distintos \"\n    \"para ver que grupo tiene mayor promedio\"\n\n    Indicá si la respuesta es correcta y justificá brevemente\n    la evaluación.\n    "
+  },
+  {
+    "tipo": "AIMessage",
+    "contenido": "Evaluación: Incompleta\n\nLa respuesta del estudiante es incorrecta porque confunde la correlación con el cálculo de promedios entre diferentes grupos (lo cual se asemeja más a una prueba de hipótesis para diferencia de medias, como una t de Student). \n\nLa correlación no consiste en comparar promedios de grupos, sino en analizar el grado y la dirección de la relación entre dos variables cuantitativas medidas en los mismos sujetos o unidades de análisis. Por ejemplo, en lugar de comparar grupos, podríamos medir en un grupo de estudiantes su **nivel de ansiedad** (Variable X) y la **frecuencia de palabras recordadas** en una prueba de memoria (Variable Y). Un análisis de correlación permitiría determinar si a medida que aumenta la ansiedad (mayor nivel), la cantidad de palabras recordadas tiende a aumentar, a disminuir o si no existe relación lineal entre ambas variables.\n\nPara profundizar en este concepto, se recomienda consultar la bibliografía de referencia:\n- *Pagano, R. R. (2006). Estadística para las ciencias del comportamiento. Capítulo 6 (Correlación)*, específicamente en las páginas que abordan la definición y magnitud de los coeficientes de correlación (pp. 9 y 23).",
+    "agente": "evaluador"
+  },
+  {
+    "tipo": "AIMessage",
+    "contenido": "**Evaluación:** Incorrecta\n\n**Justificación:** \nLa respuesta del estudiante es incorrecta porque confunde la correlación con la comparación de promedios entre diferentes grupos (un procedimiento que se asemeja más a una prueba de hipótesis para diferencia de medias). \n\nLa correlación no consiste en comparar grupos, sino en **analizar el grado y la dirección de la relación entre dos variables cuantitativas** medidas en los mismos sujetos o unidades de análisis (por ejemplo, evaluar si a mayor nivel de ansiedad, menor cantidad de palabras recordadas en una prueba de memoria). \n\nPara profundizar en el tema, se recomienda consultar a *Pagano, R. R. (2006). Estadística para las ciencias del comportamiento (Capítulo 6).*",
+    "agente": "sintesis"
+  },
+  {
+    "tipo": "HumanApproval",
+    "decision": "approve",
+    "feedback": "Continuá con la evaluación de la respuesta agrega un ejemplo que involucre niveles de ansiedad y frecuencia de palabras recordadas"
+  }
+]

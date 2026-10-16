@@ -1,0 +1,16 @@
+[
+  {
+    "tipo": "HumanMessage",
+    "contenido": "Como se crea una muestra probabilistica?"
+  },
+  {
+    "tipo": "AIMessage",
+    "contenido": "¡Hola! Como profesor, con gusto te explico cómo se crea una muestra probabilística. \n\nEn una **muestra probabilística**, todos los elementos de la población tienen la misma posibilidad (probabilidad) de ser elegidos. Su principal ventaja es que nos permite medir el error estándar y hacer estimaciones precisas sobre la población.\n\nPara seleccionar o crear una muestra probabilística, por lo general se siguen estos pasos fundamentales:\n\n1. **Definir la población objetivo:** Delimitar con claridad quiénes o qué van a ser estudiados (el universo o conjunto total de casos).\n2. **Identificar y obtener el marco muestral:** Es el listado físico o digital de todos los elementos de la población (por ejemplo, una lista de estudiantes matriculados, un directorio telefónico, un padrón electoral, etc.). Si no existe un listado completo, se deben diseñar estrategias alternativas (como mapas o racimos).\n3. **Determinar el tamaño de la muestra ($n$):** Se calcula utilizando fórmulas estadísticas basadas en el tamaño de la población, el nivel de confianza deseado y el margen de error tolerable.\n4. **Seleccionar los elementos muestrales:** Se utiliza un método mecánico, aleatorio o sistemático para garantizar que todos tengan la misma probabilidad de ser elegidos (por ejemplo, una tómbola, números aleatorios generados por computadora, o selección sistemática eligiendo cada *k-ésimo* elemento del listado).\n\nDependiendo del diseño específico, las muestras probabilísticas pueden adoptar distintas formas, como la muestra aleatoria simple, la estratificada (cuando se divide a la población en subgrupos o estratos) o por racimos (cuando se seleccionan grupos o conglomerados naturales).\n\n¿Te gustaría que profundicemos en alguno de estos pasos o en el cálculo del tamaño de la muestra?",
+    "agente": "profesor"
+  },
+  {
+    "tipo": "AIMessage",
+    "contenido": "Crear una muestra probabilística —un método en el que todos los elementos de la población tienen la misma probabilidad de ser elegidos— implica seguir estos pasos fundamentales:\n\n1. **Definir la población objetivo:** Delimitar con claridad el conjunto total de casos que se van a estudiar.\n2. **Obtener el marco muestral:** Conseguir el listado completo y actualizado de todos los elementos que componen la población (por ejemplo, padrones, directorios o bases de datos).\n3. **Calcular el tamaño de la muestra ($n$):** Determinar cuántos elementos se necesitan estudiar mediante fórmulas estadísticas, considerando el margen de error y el nivel de confianza.\n4. **Seleccionar los elementos de forma aleatoria:** Aplicar métodos mecánicos o digitales (como generadores de números aleatorios o selección sistemática) para elegir a los participantes y garantizar que no exista sesgo.\n\nDependiendo de las necesidades de la investigación, esta selección puede realizarse mediante diferentes diseños, como el aleatorio simple, el estratificado (por subgrupos) o por racimos.",
+    "agente": "sintesis"
+  }
+]

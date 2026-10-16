@@ -1,3 +1,4 @@
+import os
 import json
 import uuid
 
@@ -6,8 +7,8 @@ from redis import asyncio as aioredis
 
 from app.schemas import TaskRequest, TaskResponse, ApprovalRequest
 
-
-REDIS_URL = "redis://localhost:6379"
+# Si la variable no esta disponible, toma la segunda
+REDIS_URL = os.getenv("REDIS_URL", "redis://localhost:6379")
 QUEUE_NAME = "multiagent_tasks"
 STATUS_PREFIX = "task_status:"
 APPROVAL_QUEUE = "multiagent_approvals"
@@ -15,7 +16,7 @@ APPROVAL_PREFIX = "approval_data:"
 
 
 app = FastAPI(
-    title="PreEntrega 7 - Multi-Agent API"
+    title="Entrega Final - Inteligent System"
 )
 
 

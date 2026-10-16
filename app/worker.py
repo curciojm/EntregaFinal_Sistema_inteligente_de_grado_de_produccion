@@ -1,3 +1,4 @@
+import os
 import asyncio
 import json
 
@@ -11,7 +12,8 @@ from app.observability import configurar_observabilidad
 from app.trace_utils import guardar_traza, serializar_traza
 
 
-REDIS_URL = "redis://localhost:6379"
+# Si la variable no esta disponible, toma la segunda
+REDIS_URL = os.getenv("REDIS_URL", "redis://localhost:6379")
 
 QUEUE_NAME = "multiagent_tasks"
 STATUS_PREFIX = "task_status:"
