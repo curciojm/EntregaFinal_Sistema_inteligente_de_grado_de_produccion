@@ -25,7 +25,7 @@ async def test_procesar_aprobacion_marca_failed_si_falla_el_grafo():
         "decision": "approve",
         "feedback": "",
     }
-
+#
     fake_redis = AsyncMock()
 
     # GET del estado de la tarea
