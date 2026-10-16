@@ -352,4 +352,4 @@ async def test_procesar_aprobacion_no_hace_nada_si_no_hay_aprobacion():
     assert fake_redis.get.await_count == 2
 
     fake_app.ainvoke.assert_not_awaited()
-    fake_redis.set.assert_not_awaited()
+    fake_redis.set.assert_not_awaited() #
