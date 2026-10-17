@@ -3,6 +3,7 @@
 # para levantar el compose: docker compose up -d
 # De todas maneras RUN.SH es importante. asi la aplicacion puede ejecutarse.
 # Para que levante:
+# docker compose config parece que es para ver que se va a levantar
 # docker compose -f compose.yml up -d
 # docker compose -f compose.yml ps comprobar si funciona (esto es como con docker comun)
 # comproba que redis responde: docker compose -f compose.yml exec redis redis-cli ping
@@ -20,6 +21,8 @@
 # docker compose -f compose.yml up -d
 # docker compose -f compose.yml exec redis redis-cli ping
 # python -m app.worker
+# Cierre: al presionar Ctrl+C, el script detiene la API y el worker,
+# pero deja Redis y Phoenix encendidos en Docker. Para detener también esos contenedores, ejecutá docker compose down por separado.
 
 # VIEJA
 # services:
@@ -45,7 +48,20 @@ services:
       - redis_data:/data
     environment:
       REDIS_ARGS: "--appendonly yes"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  phoenix:
+    image: arizephoenix/phoenix:latest
+    ports:
+      - "6006:6006"
+    volumes:
+      - phoenix_data:/phoenix
 
 volumes:
   redis_data:
+  phoenix_data:
 
