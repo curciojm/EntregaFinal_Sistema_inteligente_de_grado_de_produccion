@@ -1,0 +1,21 @@
+[
+  {
+    "tipo": "HumanMessage",
+    "contenido": "\n    Quiero que evalúes la siguiente respuesta de un estudiante.\n\n    Pregunta: ¿Qué es la correlación?\n\n    Respuesta del estudiante:\n    \"La correlacion consiste en el calculo de un promedio entre dos grupos distintos \"\n    \"para ver que grupo tiene mayor promedio\"\n\n    Indicá si la respuesta es correcta y justificá brevemente\n    la evaluación.\n    "
+  },
+  {
+    "tipo": "AIMessage",
+    "contenido": "Evaluación: Incompleta\n\nLa respuesta del estudiante es incorrecta porque confunde la correlación con la comparación de promedios entre dos grupos distintos (lo cual se asemeja más a pruebas de hipótesis para diferencias de medias, como una prueba t). La correlación no calcula promedios entre grupos, sino que mide el grado de asociación o relación lineal entre dos variables cuantitativas medidas en una misma muestra de observaciones (puedes consultar más sobre esto en *Pagano 2006, Estadística para las ciencias del comportamiento*, Capítulo 6, pp. 9 y 104).\n\nPara comprenderlo mejor con el ejemplo solicitado: supongamos que queremos estudiar la relación entre el **nivel de ansiedad** (medido en una escala numérica) y la **frecuencia de palabras recordadas** (cantidad de palabras memorizadas) en un grupo de personas. Un análisis de correlación evaluaría si, a medida que aumentan los niveles de ansiedad, la cantidad de palabras recordadas tiende a aumentar, disminuir o no mostrar ningún patrón sistemático, sin comparar promedios entre grupos separados.",
+    "agente": "evaluador"
+  },
+  {
+    "tipo": "AIMessage",
+    "contenido": "**Evaluación:** Incorrecta\n\n**Justificación:** \nLa respuesta del estudiante es incorrecta porque confunde la correlación con la comparación de promedios entre dos grupos (algo propio de pruebas de hipótesis para diferencias de medias). \n\nLa correlación no calcula promedios entre grupos, sino que **mide el grado de asociación o relación lineal entre dos variables** cuantitativas en una misma muestra. Por ejemplo, evaluaría si a mayor nivel de ansiedad, la cantidad de palabras recordadas tiende a aumentar, disminuir o no mostrar relación, sin necesidad de comparar promedios entre grupos separados.",
+    "agente": "sintesis"
+  },
+  {
+    "tipo": "HumanApproval",
+    "decision": "approve",
+    "feedback": "Continuá con la evaluación de la respuesta agrega un ejemplo que involucre niveles de ansiedad y frecuencia de palabras recordadas"
+  }
+]

@@ -353,3 +353,315 @@ async def test_procesar_aprobacion_no_hace_nada_si_no_hay_aprobacion():
 
     fake_app.ainvoke.assert_not_awaited()
     fake_redis.set.assert_not_awaited()
+
+
+@pytest.mark.asyncio
+async def test_procesar_aprobacion_vuelve_a_esperar_aprobacion():
+
+    job_id = "test-job-segunda-aprobacion"
+
+    task_data = {
+        "job_id": job_id,
+        "query": "Evaluar una respuesta sobre la media.",
+        "status": "waiting_approval",
+        "result": None,
+        "error": None,
+    }
+
+    approval_data = {
+        "decision": "reject",
+        "feedback": "La respuesta necesita una corrección.",
+    }
+
+    fake_redis = AsyncMock()
+
+    fake_redis.get.side_effect = [
+        json.dumps(task_data),
+        json.dumps(approval_data),
+    ]
+
+    # Simulamos que el grafo vuelve a interrumpirse.
+    fake_app = AsyncMock()
+    fake_app.ainvoke.return_value = {
+        "__interrupt__": ["Se necesita otra aprobación"]
+    }
+
+    with (
+        patch("app.worker.redis_client", fake_redis),
+        patch(
+            "app.worker.guardar_evento_humano",
+            new_callable=AsyncMock,
+        ) as guardar_evento,
+    ):
+        await procesar_aprobacion(job_id, fake_app)
+
+    # Se registra la intervención humana.
+    guardar_evento.assert_awaited_once_with(
+        job_id=job_id,
+        decision="reject",
+        feedback="La respuesta necesita una corrección.",
+    )
+
+    # La tarea vuelve a quedar esperando aprobación.
+    ultimo_set = fake_redis.set.await_args_list[-1]
+    estado_final = json.loads(ultimo_set.args[1])
+
+    assert ultimo_set.args[0] == f"task_status:{job_id}"
+    assert estado_final["status"] == "waiting_approval"
+    assert estado_final["result"] is None
+    assert estado_final["error"] is None
+
+    # Se elimina la aprobación ya procesada.
+    fake_redis.delete.assert_awaited_once_with(
+        f"approval_data:{job_id}"
+    )
+
+    # El grafo debe haberse reanudado una vez.
+    fake_app.ainvoke.assert_awaited_once()
+
+
+@pytest.mark.asyncio
+async def test_procesar_aprobacion_falla_si_no_puede_guardar_evento_humano():
+
+    job_id = "test-job-error-evento"
+
+    task_data = {
+        "job_id": job_id,
+        "query": "Evaluar una respuesta sobre la media.",
+        "status": "waiting_approval",
+        "result": None,
+        "error": None,
+    }
+
+    approval_data = {
+        "decision": "approve",
+        "feedback": "La respuesta es correcta.",
+    }
+
+    fake_redis = AsyncMock()
+    fake_redis.get.side_effect = [
+        json.dumps(task_data),
+        json.dumps(approval_data),
+    ]
+
+    fake_app = AsyncMock()
+
+    with (
+        patch("app.worker.redis_client", fake_redis),
+        patch(
+            "app.worker.guardar_evento_humano",
+            new_callable=AsyncMock,
+            side_effect=ConnectionError("Redis no disponible"),
+        ) as guardar_evento,
+    ):
+        await procesar_aprobacion(job_id, fake_app)
+
+    guardar_evento.assert_awaited_once_with(
+        job_id=job_id,
+        decision="approve",
+        feedback="La respuesta es correcta.",
+    )
+
+    # El error debe quedar registrado en el estado de la tarea.
+    ultimo_set = fake_redis.set.await_args_list[-1]
+    estado_final = json.loads(ultimo_set.args[1])
+
+    assert ultimo_set.args[0] == f"task_status:{job_id}"
+    assert estado_final["status"] == "failed"
+    assert estado_final["result"] is None
+    assert estado_final["error"] == "Redis no disponible"
+
+    # El grafo no debe reanudarse si falla el registro humano.
+    fake_app.ainvoke.assert_not_awaited()
+
+    # La aprobación no se elimina, porque el error ocurrió antes
+    # de llegar al borrado que está dentro del try.
+    fake_redis.delete.assert_not_awaited()
+
+
+@pytest.mark.asyncio
+async def test_main_worker_marca_failed_si_falla_el_grafo():
+
+    job_id = "test-job-worker-error"
+
+    task_data = {
+        "job_id": job_id,
+        "query": "Explicá qué es la media.",
+        "status": "pending",
+        "result": None,
+        "error": None,
+    }
+
+    fake_redis = AsyncMock()
+    fake_redis.lpop.side_effect = [
+        job_id,  # Primera consulta: entrega la tarea
+        None,    # Segunda consulta: cola de tareas vacía
+        None,    # Tercera consulta: cola de aprobaciones vacía
+    ]
+    fake_redis.get.return_value = json.dumps(task_data)
+
+    fake_app = AsyncMock()
+    fake_app.ainvoke.side_effect = Exception(
+        "Error simulado del grafo"
+    )
+
+    fake_grafo = type(
+        "FakeGraph",
+        (),
+        {"compile": lambda self, checkpointer: fake_app},
+    )()
+
+    class FakeSaver:
+        async def __aenter__(self):
+            return self
+
+        async def __aexit__(self, *args):
+            return False
+
+    class StopWorker(Exception):
+        pass
+
+    with (
+        patch("app.worker.redis_client", fake_redis),
+        patch("app.worker.grafo", fake_grafo),
+        patch(
+            "app.worker.AsyncRedisSaver.from_conn_string",
+            return_value=FakeSaver(),
+        ),
+        patch(
+            "app.worker.asyncio.sleep",
+            side_effect=StopWorker,
+        ),
+    ):
+        with pytest.raises(StopWorker):
+            await main_worker()
+
+    fake_app.ainvoke.assert_awaited_once()
+
+    # Se guarda el estado processing y luego failed.
+    assert fake_redis.set.await_count == 2
+
+    ultimo_set = fake_redis.set.await_args_list[-1]
+    estado_final = json.loads(ultimo_set.args[1])
+
+    assert ultimo_set.args[0] == f"task_status:{job_id}"
+    assert estado_final["status"] == "failed"
+    assert estado_final["result"] is None
+    assert estado_final["error"] == "Error simulado del grafo"
+
+
+@pytest.mark.asyncio
+async def test_main_worker_ignora_tarea_que_no_existe_en_redis():
+
+    job_id = "test-job-inexistente"
+
+    fake_redis = AsyncMock()
+    fake_redis.lpop.side_effect = [
+        job_id,  # Se obtiene el ID de la cola
+        None,    # La cola de tareas queda vacía
+        None,    # La cola de aprobaciones queda vacía
+    ]
+    fake_redis.get.return_value = None
+
+    fake_app = AsyncMock()
+
+    fake_grafo = type(
+        "FakeGraph",
+        (),
+        {"compile": lambda self, checkpointer: fake_app},
+    )()
+
+    class FakeSaver:
+        async def __aenter__(self):
+            return self
+
+        async def __aexit__(self, *args):
+            return False
+
+    class StopWorker(Exception):
+        pass
+
+    with (
+        patch("app.worker.redis_client", fake_redis),
+        patch("app.worker.grafo", fake_grafo),
+        patch(
+            "app.worker.AsyncRedisSaver.from_conn_string",
+            return_value=FakeSaver(),
+        ),
+        patch(
+            "app.worker.asyncio.sleep",
+            side_effect=StopWorker,
+        ),
+    ):
+        with pytest.raises(StopWorker):
+            await main_worker()
+
+    # Se consultó el estado de la tarea inexistente.
+    fake_redis.get.assert_awaited_once_with(
+        f"task_status:{job_id}"
+    )
+
+    # No se intentó ejecutar el grafo ni actualizar el estado.
+    # esto es un assert async
+    fake_app.ainvoke.assert_not_awaited()
+    fake_redis.set.assert_not_awaited()
+
+
+@pytest.mark.asyncio
+async def test_main_worker_ignora_aprobacion_de_job_inexistente():
+
+    job_id = "test-approval-job-inexistente"
+
+    fake_redis = AsyncMock()
+
+    # Primero no hay tareas; después aparece una aprobación.
+    fake_redis.lpop.side_effect = [
+        None,       # Cola de tareas
+        job_id,     # Cola de aprobaciones
+        None,       # Cola de tareas en la siguiente vuelta
+        None,       # Cola de aprobaciones en la siguiente vuelta
+    ]
+
+    # El job no existe en Redis.
+    fake_redis.get.return_value = None
+
+    fake_app = AsyncMock()
+
+    fake_grafo = type(
+        "FakeGraph",
+        (),
+        {"compile": lambda self, checkpointer: fake_app},
+    )()
+
+    class FakeSaver:
+        async def __aenter__(self):
+            return self
+
+        async def __aexit__(self, *args):
+            return False
+
+    class StopWorker(Exception):
+        pass
+
+    with (
+        patch("app.worker.redis_client", fake_redis),
+        patch("app.worker.grafo", fake_grafo),
+        patch(
+            "app.worker.AsyncRedisSaver.from_conn_string",
+            return_value=FakeSaver(),
+        ),
+        patch(
+            "app.worker.asyncio.sleep",
+            side_effect=StopWorker,
+        ),
+    ):
+        with pytest.raises(StopWorker):
+            await main_worker()
+
+    # Se consultó la aprobación, pero no se ejecutó el grafo.
+    fake_redis.get.assert_awaited_once_with(
+        f"task_status:{job_id}"
+    )
+
+    fake_app.ainvoke.assert_not_awaited()
+    fake_redis.set.assert_not_awaited()

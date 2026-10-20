@@ -1,0 +1,21 @@
+[
+  {
+    "tipo": "HumanMessage",
+    "contenido": "\n    Quiero que evalúes la siguiente respuesta de un estudiante.\n\n    Pregunta: ¿Qué es la correlación?\n\n    Respuesta del estudiante:\n    \"La correlacion consiste en el calculo de un promedio entre dos grupos distintos \"\n    \"para ver que grupo tiene mayor promedio\"\n\n    Indicá si la respuesta es correcta y justificá brevemente\n    la evaluación.\n    "
+  },
+  {
+    "tipo": "AIMessage",
+    "contenido": "Evaluación: Incompleta\n\nLa respuesta del estudiante es incorrecta porque confunde el concepto de correlación con la comparación de promedios entre dos grupos independientes (lo cual correspondería a una prueba de hipótesis para diferencia de medias, como una t de Student). \n\nLa **correlación** no busca comparar grupos para ver cuál tiene mayor promedio, sino **analizar el grado de relación o asociación lineal entre dos variables cuantitativas** medidas en una misma muestra o conjunto de individuos. \n\nPara comprenderlo mejor, podemos pensar en un ejemplo práctico que involucre **niveles de ansiedad** y **frecuencia de palabras recordadas**: \nEn lugar de comparar dos grupos distintos, medimos ambas variables en los mismos participantes (por ejemplo, evaluamos el nivel de ansiedad de cada persona y registramos cuántas palabras logra recordar en una prueba de memoria). Un análisis de correlación nos permitiría determinar si a mayor nivel de ansiedad corresponde una mayor o menor frecuencia de palabras recordadas, evaluando si ambas variables covarían de manera sistemática.\n\nPuedes consultar más sobre este tema en la bibliografía de referencia:\n- **Pagano, R. (2006).** *Estadística para las ciencias del comportamiento*. Capítulo 6 (\"Correlación\"), pp. 9 y 23.\n- **Sampieri, R. (2018).** *Metodología de la investigación*. Capítulo 7, pp. 6 y 25.",
+    "agente": "evaluador"
+  },
+  {
+    "tipo": "AIMessage",
+    "contenido": "**Evaluación: Incorrecta**\n\nLa respuesta del estudiante es incorrecta porque confunde el concepto de correlación con la comparación de promedios entre dos grupos (lo cual correspondería a una prueba de diferencia de medias, como la *t* de Student). \n\nLa **correlación** no busca comparar grupos para ver cuál tiene mayor promedio, sino **analizar el grado de relación o asociación lineal entre dos variables** medidas en una misma muestra o conjunto de individuos. Por ejemplo, en lugar de comparar dos grupos, mediría dos variables en las mismas personas (como nivel de ansiedad y cantidad de palabras recordadas) para determinar si varían de manera conjunta.\n\n**Bibliografía de referencia:**\n* **Pagano, R. (2006).** *Estadística para las ciencias del comportamiento*. \n* **Sampieri, R. (2018).** *Metodología de la investigación*.",
+    "agente": "sintesis"
+  },
+  {
+    "tipo": "HumanApproval",
+    "decision": "approve",
+    "feedback": "Continuá con la evaluación de la respuesta agrega un ejemplo que involucre niveles de ansiedad y frecuencia de palabras recordadas"
+  }
+]

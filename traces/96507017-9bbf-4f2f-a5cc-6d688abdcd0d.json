@@ -1,0 +1,21 @@
+[
+  {
+    "tipo": "HumanMessage",
+    "contenido": "Explicá brevemente qué es la regresión y cómo se calcula."
+  },
+  {
+    "tipo": "AIMessage",
+    "contenido": "¡Hola! Con gusto te explico de manera sencilla en qué consiste la regresión y cómo se calcula.\n\n### ¿Qué es la regresión?\nLa regresión es una técnica estadística que se utiliza para analizar y aprovechar la relación entre dos o más variables con el propósito de **hacer predicciones**. \n\nCuando queremos predecir los valores de una variable (a la que llamamos $Y$ o variable dependiente) a partir de otra que ya conocemos (llamada $X$ o variable independiente), trazamos una línea que mejor se ajuste a los puntos de nuestros datos. A esta línea se le conoce como **recta de regresión** (o recta de mínimos cuadrados, ya que se ajusta minimizando los errores de predicción).\n\n---\n\n### ¿Cómo se calcula?\nPara calcular la recta de regresión lineal (por ejemplo, para predecir $Y$ a partir de $X$), utilizamos la ecuación de una línea recta:\n\n$$Y' = b_y X + a_y$$\n\nDonde:\n* **$Y'$** es el valor predicho.\n* **$b_y$** es la **pendiente** de la recta (indica cuánto cambia $Y$ por cada cambio unitario en $X$).\n* **$a_y$** es la **ordenada al origen** (el punto donde la recta cruza el eje vertical $Y$).\n\nPara obtener estos valores a partir de nuestros datos, se siguen estos pasos:\n\n1. **Calcular la pendiente ($b_y$):**\n   Se utiliza la fórmula basada en los datos en bruto:\n   $$b_y = \\frac{\\sum XY - \\frac{(\\sum X)(\\sum Y)}{N}}{\\sum X^2 - \\frac{(\\sum X)^2}{N}}$$\n   *(Donde $N$ es el número total de observaciones o pares de datos).*\n\n2. **Calcular la ordenada al origen ($a_y$):**\n   Una vez que ya obtuviste $b_y$, se calcula $a_y$ utilizando las medias de las variables ($\\bar{X}$ e $\\bar{Y}$):\n   $$a_y = \\bar{Y} - b_y \\bar{X}$$\n\n3. **Armar la ecuación:**\n   Sustituyes los valores obtenidos de $b_",
+    "agente": "profesor"
+  },
+  {
+    "tipo": "AIMessage",
+    "contenido": "¡Hola! Veo que empezaste a explicar el concepto, pero te interrumpiste a mitad de la fórmula final. \n\nSi necesitás profundizar en algún aspecto específico de la **regresión** (como el coeficiente de correlación asociado, la varianza explicada, o si querés consultar alguna fuente teórica de nuestra base de conocimientos), avisame y con gusto lo vemos paso a paso. ¿En qué te puedo ayudar?",
+    "agente": "profesor"
+  },
+  {
+    "tipo": "AIMessage",
+    "contenido": "¡Hola! Con gusto te explico de manera sencilla en qué consiste la regresión y cómo se calcula.\n\n### ¿Qué es la regresión?\nLa regresión es una técnica estadística que se utiliza para analizar la relación entre dos o más variables con el propósito de **hacer predicciones**. \n\nCuando queremos predecir los valores de una variable (a la que llamamos $Y$ o variable dependiente) a partir de otra que ya conocemos (llamada $X$ o variable independiente), trazamos una línea que mejor se ajuste a los puntos de nuestros datos. A esta línea se le conoce como **recta de regresión** (o recta de mínimos cuadrados, ya que se ajusta minimizando los errores de predicción).\n\n---\n\n### ¿Cómo se calcula?\nPara calcular la recta de regresión lineal (para predecir $Y$ a partir de $X$), utilizamos la ecuación de una línea recta:\n\n$$Y' = b_y X + a_y$$\n\nDonde:\n* **$Y'$** es el valor predicho.\n* **$b_y$** es la **pendiente** de la recta (indica cuánto cambia $Y$ por cada cambio unitario en $X$).\n* **$a_y$** es la **ordenada al origen** (el punto donde la recta cruza el eje vertical $Y$).\n\nPara obtener estos valores a partir de nuestros datos, se siguen estos pasos:\n\n1. **Calcular la pendiente ($b_y$):**\n   Se utiliza la siguiente fórmula:\n   $$b_y = \\frac{\\sum XY - \\frac{(\\sum X)(\\sum Y)}{N}}{\\sum X^2 - \\frac{(\\sum X)^2}{N}}$$\n   *(Donde $N$ es el número total de observaciones o pares de datos).*\n\n2. **Calcular la ordenada al origen ($a_y$):**\n   Una vez obtenida la pendiente, se calcula utilizando las medias de las variables ($\\bar{X}$ e $\\bar{Y}$):\n   $$a_y = \\bar{Y} - b_y \\bar{X}$$\n\n3. **Armar la ecuación:**\n   Finalmente, se sustituyen $b_y$ y $a_y$ en la ecuación general para poder realizar las predicciones deseadas.",
+    "agente": "sintesis"
+  }
+]

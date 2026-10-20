@@ -1,3 +1,27 @@
+# FastAPI se encarga de gran parte del manejo de HTTP para que vos puedas concentrarte en la lógica de tu aplicación. 
+# Y sí, una diferencia importante con Django es que en FastAPI podés definir endpoints directamente con funciones, 
+# sin necesidad de crear una clase para cada vista
+
+# ¿Qué hace FastAPI?
+# Cuando llega una petición HTTP, FastAPI se encarga, entre otras cosas, de:
+# - Identificar la ruta y el método HTTP (GET, POST, PUT, DELETE, etc.).
+# - Extraer y validar los datos de entrada mediante modelos de Pydantic.
+# - Ejecutar la función correspondiente.
+# - Convertir el resultado en una respuesta HTTP, normalmente JSON.
+# - Generar la documentación OpenAPI que Swagger utiliza.
+
+# Redis se usa mucho como caché, pero no es solamente una caché. Es un almacén de datos en memoria que también puede persistir información en disco y 
+# que ofrece estructuras de datos como listas, conjuntos, hashes y colas implementadas sobre ellas
+
+# ¿Por qué Redis y no una variable de Python?
+# Imaginá que guardás las tareas en una lista de Python dentro de FastAPI. Si el proceso se reinicia, 
+# esa información se pierde; además, otro proceso, como tu worker independiente, no podría acceder directamente a esa lista.
+
+# Con Redis, FastAPI y el worker pueden compartir los mismos datos, aunque sean procesos distintos
+
+# En síntesis: en tu arquitectura, Redis funciona como un intermediario compartido entre FastAPI y el worker, 
+# almacenando los estados y las tareas pendientes. No lo estás usando principalmente como caché.
+
 import os
 import json
 import uuid
@@ -25,6 +49,8 @@ redis_client = aioredis.from_url(
     decode_responses=True
 )
 
+# ESTO ES FAST API TODO EL MAIN ES BASICAMENTE FAST API
+# el decorador es de fast api
 @app.post("/process", response_model=TaskResponse)
 async def create_task(request: TaskRequest):
 
