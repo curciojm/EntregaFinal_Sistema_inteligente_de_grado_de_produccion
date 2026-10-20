@@ -8,8 +8,10 @@ from langgraph.types import Command
 from redis import asyncio as aioredis
 
 from app.graph_config import grafo
+from app.logging_config import logger
 from app.observability import configurar_observabilidad
 from app.trace_utils import guardar_traza, serializar_traza
+
 
 
 # Si la variable no esta disponible, toma la segunda
@@ -29,9 +31,9 @@ redis_client = aioredis.from_url(
     decode_responses=True
 )
 
-print(">>> CONFIGURANDO PHOENIX")
+logger.info("Configurando Phoenix...")
 configurar_observabilidad()
-print(">>> PHOENIX CONFIGURADO")
+logger.info("Phoenix configurado correctamente.")
 
 async def guardar_evento_humano(
     job_id: str,
@@ -88,15 +90,20 @@ async def procesar_aprobacion(
     raw_data = await redis_client.get(key)
 
     if not raw_data:
-        print(f"Job {job_id} no encontrado.")
+        logger.warning(
+            "Approval processing skipped: job %s not found",
+            job_id,
+        )
         return
 
     task_data = json.loads(raw_data)
 
     if task_data["status"] != "waiting_approval":
-        print(
-            f"Job {job_id} no está esperando aprobación."
-        )
+        logger.warning(
+            "Approval processing skipped for job %s: status is %s",
+            job_id,
+            task_data["status"]
+            )
         return
 
     approval_key = f"{APPROVAL_PREFIX}{job_id}"
@@ -106,9 +113,10 @@ async def procesar_aprobacion(
     )
 
     if not raw_approval:
-        print(
-            f"No hay datos de aprobación para {job_id}"
-        )
+        logger.warning(
+            "Approval processing skipped: no approval data for job %s",
+            job_id,
+            )
         return
 
     approval_data = json.loads(raw_approval)
@@ -118,10 +126,11 @@ async def procesar_aprobacion(
 
     try:
 
-        print(
-            f"Decisión humana para {job_id}: "
-            f"{decision}"
-        )
+        logger.info(
+            "Human decision received for job %s: decision=%s",
+            job_id,
+            decision
+            )
 
         await guardar_evento_humano(
             job_id=job_id,
@@ -152,10 +161,7 @@ async def procesar_aprobacion(
             task_data["result"] = None
             task_data["error"] = None
 
-            print(
-                f"Job {job_id} vuelve a esperar "
-                "aprobación humana."
-            )
+            logger.info("Job %s is waiting for human approval again", job_id,)
 
 
         else:
@@ -183,8 +189,9 @@ async def procesar_aprobacion(
             task_data["result"] = response
             task_data["error"] = None
 
-            print(
-                f"Job {job_id} completado."
+            logger.info(
+                "Job %s completed successfully after human approval",
+                job_id,
             )
 
             await redis_client.delete(
@@ -196,14 +203,12 @@ async def procesar_aprobacion(
         )
 
     except Exception as e:
-
         task_data["status"] = "failed"
         task_data["result"] = None
         task_data["error"] = str(e)
-
-        print(
-            f"Error procesando aprobación "
-            f"del Job {job_id}: {e}"
+        logger.exception(
+            "Error processing approval for job %s",
+            job_id,
         )
 
     await redis_client.set(
@@ -214,9 +219,7 @@ async def procesar_aprobacion(
 
 async def main_worker():
 
-    print(
-        "Worker iniciado y escuchando..."
-    )
+    logger.info("Worker started and listening for tasks")
 
     async with AsyncRedisSaver.from_conn_string(
         REDIS_URL
@@ -233,9 +236,9 @@ async def main_worker():
             )
 
             if job_id is not None:
-
-                print(
-                    f"Procesando Job: {job_id}"
+                logger.info(
+                    "Starting processing for job %s",
+                    job_id,
                 )
 
                 key = f"{STATUS_PREFIX}{job_id}"
@@ -246,8 +249,9 @@ async def main_worker():
 
                 if not raw_data:
 
-                    print(
-                        f"Job {job_id} no encontrado."
+                    logger.warning(
+                        "Task skipped: data for job %s not found in Redis",
+                        job_id,
                     )
 
                     continue
@@ -286,18 +290,17 @@ async def main_worker():
 
                     if "__interrupt__" in resultado:
 
+
                         task_data["status"] = (
                             "waiting_approval"
                         )
 
                         task_data["result"] = None
                         task_data["error"] = None
-
-                        print(
-                            f"Job {job_id} "
-                            "esperando aprobación humana."
+                        logger.info(
+                            "Job %s is waiting for human approval",
+                            job_id,
                         )
-
 
                     else:
 
@@ -307,7 +310,7 @@ async def main_worker():
 
                         guardar_traza(
                             traza,
-                            job_id
+                            job_id,
                         )
 
                         response = (
@@ -323,19 +326,37 @@ async def main_worker():
                         task_data["error"] = None
 
                 except Exception as e:
-
                     task_data["status"] = "failed"
                     task_data["result"] = None
                     task_data["error"] = str(e)
+
+                    logger.exception(
+                        "Error processing job %s",
+                        job_id,
+                    )
 
                 await redis_client.set(
                     key,
                     json.dumps(task_data)
                 )
 
-                print(
-                    f"Job {job_id} finalizado."
-                )
+                if task_data["status"] == "completed":
+                    logger.info(
+                        "Job %s completed successfully",
+                        job_id,
+                    )
+                elif task_data["status"] == "failed":
+                    logger.error(
+                        "Job %s failed: %s",
+                        job_id,
+                        task_data["error"],
+                    )
+                else:
+                    logger.info(
+                        "Job %s processing finished with status %s",
+                        job_id,
+                        task_data["status"],
+                    )
 
                 continue
 
@@ -345,10 +366,9 @@ async def main_worker():
             )
 
             if approval_job_id is not None:
-
-                print(
-                    "Procesando aprobación del "
-                    f"Job: {approval_job_id}"
+                logger.info(
+                    "Resuming job %s after human approval",
+                    approval_job_id,
                 )
 
                 await procesar_aprobacion(
