@@ -52,6 +52,8 @@ redis_client = aioredis.from_url(
 
 
 @app.post("/process", response_model=TaskResponse)
+# FAST API VALIDA SEGUN EL ESQUEMA CREADO Y PUEDE CREAR EL JSON
+# Cada caja de fast api sera visualizada con el swagger
 async def create_task(request: TaskRequest):
     job_id = str(uuid.uuid4())
 
@@ -130,7 +132,7 @@ async def approve_task(
             status_code=400,
             detail="Job is not waiting for approval",
         )
-
+    # approve, reject, failed etc
     approval_data = {
         "decision": request.decision,
         "feedback": request.feedback,

@@ -221,6 +221,7 @@ async def main_worker():
 
     logger.info("Worker started and listening for tasks")
 
+    # Redis checkpointer
     async with AsyncRedisSaver.from_conn_string(
         REDIS_URL
     ) as checkpointer:
