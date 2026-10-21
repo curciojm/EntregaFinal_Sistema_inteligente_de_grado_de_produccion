@@ -12,7 +12,7 @@ La aplicación expone sus funcionalidades mediante una API REST desarrollada con
 
 El proyecto incorpora observabilidad mediante Arize Phoenix, instrumentación con OpenInference, registro de trazas en JSON y tests automatizados.
 
-## Arquitectura
+## Arquitectura del sistema
 
 ```text
                          Cliente
@@ -58,56 +58,34 @@ El diagrama representa los componentes principales y sus relaciones funcionales.
 
 ---
 
-## Flujo Human-in-the-loop
+## Arquitectura multiagente
 
-Cuando el Supervisor determina que debe utilizarse el agente evaluador, el flujo pasa previamente por el nodo de aprobación humana.
+El sistema utiliza una topología jerárquica en la que un Supervisor coordina dos agentes especializados: un Profesor, orientado a consultas conceptuales, y un Evaluador, encargado de analizar las respuestas de los estudiantes.
 
-```text
-Supervisor
-    │
-    ▼
-Human Approval
-    │
-    ▼
-interrupt()
-    │
-    ▼
-WAITING_APPROVAL
-    │
-    │ POST /approve/{job_id}
-    ▼
-Redis
-    │
-    ▼
-Worker
-    │
-    ▼
-Command(resume=...)
-    │
-    ▼
-Evaluador
-    │
-    ├── revisión necesaria ──► Human Approval
-    │
-    └── evaluación final ───► Supervisor
-                                  │
-                                  ▼
-                               Síntesis
-                                  │
-                                  ▼
-                              completed
+```mermaid
+flowchart TD
+    U[Consulta del usuario] --> S[Supervisor]
+
+    S -->|Consulta conceptual| P[Agente Profesor]
+    S -->|Evaluación de respuesta| E[Agente Evaluador]
+
+    P --> TC[buscar_concepto]
+    P --> TF[buscar_fuente]
+
+    E --> TE[evaluar_concepto]
+    E --> TC
+    E --> TF
+
+    TC --> P
+    TF --> P
+    TE --> E
+
+    P -->|Resultado| S
+    E -->|Resultado| S
+
+    S -->|Tarea completa| SY[Síntesis]
+    SY --> F[Respuesta final]
 ```
-
-El flujo utiliza `interrupt()` para pausar la ejecución del grafo y `Command(resume=...)` para continuarla una vez recibida la decisión humana.
-
-La intervención humana puede:
-
-- **Aprobar** la evaluación y continuar el flujo.
-- **Rechazar** la evaluación proporcionando feedback para que el evaluador vuelva a analizar la respuesta.
-
-El feedback humano se incorpora a la siguiente evaluación y se persiste junto con los demás eventos de intervención.
-
----
 
 ### Componentes principales
 
@@ -235,57 +213,58 @@ El agente profesor utiliza las herramientas de recuperación para localizar info
 
 El agente evaluador utiliza la herramienta `evaluar_concepto` para obtener una categoría inicial y puede consultar fuentes o contenido teórico adicional. Cuando recibe feedback humano, vuelve a analizar la respuesta considerando las observaciones recibidas.
 
+## Flujo Human-in-the-loop
+
+Cuando el Supervisor determina que debe utilizarse el agente evaluador, el flujo pasa previamente por el nodo de aprobación humana.
+
+```text
+Supervisor
+    │
+    ▼
+Human Approval
+    │
+    ▼
+interrupt()
+    │
+    ▼
+WAITING_APPROVAL
+    │
+    │ POST /approve/{job_id}
+    ▼
+Redis
+    │
+    ▼
+Worker
+    │
+    ▼
+Command(resume=...)
+    │
+    ▼
+Evaluador
+    │
+    ├── revisión necesaria ──► Human Approval
+    │
+    └── evaluación final ───► Supervisor
+                                  │
+                                  ▼
+                               Síntesis
+                                  │
+                                  ▼
+                              completed
+```
+
+El flujo utiliza `interrupt()` para pausar la ejecución del grafo y `Command(resume=...)` para continuarla una vez recibida la decisión humana.
+
+La intervención humana puede:
+
+- **Aprobar** la evaluación y continuar el flujo.
+- **Rechazar** la evaluación proporcionando feedback para que el evaluador vuelva a analizar y modificar la respuesta.
+
+El feedback humano se incorpora a la siguiente evaluación y se persiste junto con los demás eventos de intervención.
+
 ### Síntesis
 
 El nodo de síntesis combina las contribuciones acumuladas durante la ejecución y produce una respuesta final clara y breve.
-
-## Human-in-the-loop (HITL)
-
-El sistema incorpora un mecanismo de intervención humana mediante `interrupt()` y `Command(resume=...)` de LangGraph.
-
-Cuando el flujo requiere una revisión, el grafo se interrumpe y la tarea pasa al estado `waiting_approval`. La persona puede aprobar la evaluación o rechazarla y proporcionar observaciones.
-
-El flujo de aprobación utiliza el siguiente esquema:
-
-```text
-Ejecución del grafo
-        |
-        v
-Solicitud de revisión humana
-        |
-        v
-    interrupt()
-        |
-        v
-  waiting_approval
-        |
-        v
- POST /approve/{job_id}
-        |
-        v
- Decisión y feedback en Redis
-        |
-        v
-      Worker
-        |
-        v
- Command(resume=...)
-        |
-        v
- Reanudación del grafo
-        |
-        +----> Reevaluación o aclaración, si corresponde
-        |
-        v
-      Síntesis
-        |
-        v
-     completed
-```
-
-El feedback humano se incorpora a la siguiente evaluación cuando se solicita una revisión. El flujo puede volver a requerir intervención si la lógica del grafo así lo determina.
-
-Las decisiones humanas también se registran como eventos asociados a la tarea y se incorporan a la traza JSON cuando finaliza correctamente.
 
 ## API REST
 
@@ -366,7 +345,7 @@ El Worker actualiza el estado de la tarea según el resultado del procesamiento.
 
 La instrumentación utiliza Arize Phoenix, OpenInference y OpenTelemetry para observar las ejecuciones del sistema.
 
-Phoenix permite inspeccionar las trazas y spans instrumentados, seguir la secuencia observable de ejecución y analizar las métricas disponibles de latencia y costo.
+Phoenix permite inspeccionar las trazas y los spans instrumentados, seguir la secuencia observable de ejecución y analizar las métricas disponibles de latencia y costo.
 
 Además, el sistema conserva trazas locales en formato JSON. Según el flujo ejecutado, estas pueden incluir:
 
@@ -378,7 +357,9 @@ Además, el sistema conserva trazas locales en formato JSON. Según el flujo eje
 
 Las trazas representan la ejecución observable del sistema, no el razonamiento interno no observable de los modelos.
 
-La instrumentación de Phoenix utiliza el endpoint local `http://localhost:6006/v1/traces`. La interfaz web se encuentra en `http://localhost:6006`.
+La instrumentación de Phoenix utiliza el endpoint local [http://localhost:6006/v1/traces](http://localhost:6006/v1/traces). La interfaz web se encuentra en [http://localhost:6006](http://localhost:6006).
+
+Se incluyen **cinco trazas de ejemplo** en la carpeta `traces/` y capturas de pantalla en `screenshots/` que muestran ejecuciones del sistema y las métricas de costos y latencias observadas en Arize Phoenix.
 
 ## Manejo de errores
 
