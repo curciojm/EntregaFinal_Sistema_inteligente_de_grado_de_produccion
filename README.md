@@ -515,6 +515,10 @@ También se incorporó una alternativa mediante un script de shell para Linux. S
 7. Consultar nuevamente el estado hasta obtener el resultado final.
 8. Inspeccionar la ejecución en Phoenix y revisar la traza JSON correspondiente.
 
+### Demostración del Human-in-the-Loop
+
+El siguiente video muestra el flujo de interacción con el mecanismo de aprobación humana (Human-in-the-Loop), desde la solicitud de aprobación hasta la continuación de la ejecución.
+
 ## Tecnologías utilizadas
 
 - Python
@@ -547,22 +551,42 @@ La estructura funcional principal es:
 │   │   ├── evaluador.py
 │   │   ├── supervisor.py
 │   │   └── sintesis.py
+│   ├── chunking.py
+│   ├── db_config.py
+│   ├── db_ingest.py
+│   ├── logging_config.py
 │   ├── main.py
+│   ├── models.py
 │   ├── worker.py
 │   ├── graph_config.py
 │   ├── schemas.py
 │   ├── tools.py
 │   ├── retriever.py
-│   ├── db_config.py
 │   ├── errors.py
 │   ├── hitl.py
 │   ├── observability.py
+│   ├── setup.py
 │   └── trace_utils.py
 ├── tests/
+│   ├── test_api.py
+│   ├── test_checkpoint_hitl.py
+│   ├── test_checkpoint.py
+│   ├── test_chunking.py
+│   ├── test_e2e_hitl_evaluation.py
+│   ├── test_e2e_profesor.py
+│   ├── test_main.py
+│   ├── test_redis_integration.py
+│   ├── test_schemas.py
+│   └── test_worker.py
 ├── traces/
 ├── screenshots/
 ├── evaluation/
 │   └── retrieval/
+│       ├── golden_set.json
+│       ├── figures.ipynb
+│       ├── results/
+│       │   ├── preentrega4_datos_precision.csv
+│       │   └── preentrega4_datos_recall.csv
 │       └── figures/
 │           ├── recall_at_5.png
 │           └── precision_at_5.png
@@ -570,6 +594,7 @@ La estructura funcional principal es:
 ├── compose.yml
 ├── requirements.txt
 ├── run.sh
+├── run_linux.sh
 └── README.md
 ```
 
@@ -593,4 +618,4 @@ Las principales decisiones de diseño son:
 
 ## Uso de herramientas de asistencia
 
-Durante el desarrollo se consultaron materiales del curso, documentación técnica y recursos disponibles en Internet. También se utilizó ChatGPT como apoyo para resolver dudas conceptuales, revisar implementaciones y depurar problemas durante el desarrollo.
+Durante el desarrollo se consultaron materiales del curso, código proporcionado por el profesor como guía, documentación técnica y recursos disponibles en Internet. También se utilizó ChatGPT como apoyo para resolver dudas conceptuales, revisar implementaciones y depurar problemas durante el desarrollo.
