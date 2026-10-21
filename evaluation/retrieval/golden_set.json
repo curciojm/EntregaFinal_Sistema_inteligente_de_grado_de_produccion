@@ -1,0 +1,96 @@
+[
+{
+"pregunta": "¿Qué es la correlación?",
+"categorias_esperadas": ["correlacion"],
+"fuentes_esperadas": [
+"Pagano 2006 CAP 6 - Estadística para las ciencias del comportamiento"
+],
+"respuesta_disponible": true
+},
+{
+"pregunta": "¿Qué es la probabilidad?",
+"categorias_esperadas": ["probabilidad"],
+"fuentes_esperadas": [
+"Pagano 2006 CAP 8 - Estadística para las ciencias del comportamiento"
+],
+"respuesta_disponible": true
+},
+{
+"pregunta": "¿En qué consiste un diseño experimental?",
+"categorias_esperadas": ["diseño experimental","diseño no experimental"],
+"fuentes_esperadas": [
+"Sampieri 2018 CAP 7 - Metodología de la investigación"
+],
+"respuesta_disponible": true
+},
+{
+"pregunta": "¿Qué es la regresión?",
+"categorias_esperadas": ["regresion"],
+"fuentes_esperadas": [
+"Pagano 2006 CAP 7 - Estadística para las ciencias del comportamiento"
+],
+"respuesta_disponible": true
+},
+{
+"pregunta": "¿Cómo generar una muestra?",
+"categorias_esperadas": [
+"seleccion de la muestra",
+"muestra probabilistica",
+"muestra no probabilistica",
+"probabilidad"
+],
+"fuentes_esperadas": [
+"Sampieri 2018 CAP 8 - Metodología de la investigación",
+"Pagano 2006 CAP 6 - Estadística para las ciencias del comportamiento",
+"Pagano 2006 CAP 8 - Estadística para las ciencias del comportamiento"
+],
+"respuesta_disponible": true
+},
+{
+"pregunta": "¿Qué diferencia existe entre una muestra probabilística y una muestra no probabilística?",
+"categorias_esperadas": [
+"seleccion de la muestra",
+"muestra probabilistica",
+"muestra no probabilistica",
+"probabilidad"
+],
+"fuentes_esperadas": [
+"Sampieri 2018 CAP 8 - Metodología de la investigación",
+"Pagano 2006 CAP 6 - Estadística para las ciencias del comportamiento",
+"Pagano 2006 CAP 8 - Estadística para las ciencias del comportamiento"
+],
+"respuesta_disponible": true
+},
+{
+"pregunta": "¿Qué relación existe entre correlación y regresión?",
+"categorias_esperadas": [
+"correlacion",
+"regresion"
+],
+"fuentes_esperadas": [
+"Pagano 2006 CAP 6 - Estadística para las ciencias del comportamiento",
+"Pagano 2006 CAP 7 - Estadística para las ciencias del comportamiento"
+],
+"respuesta_disponible": true
+},
+{
+"pregunta": "¿Cómo se calcula la regresion?",
+"categorias_esperadas": ["regresion"],
+"fuentes_esperadas": [
+"Pagano 2006 CAP 7 - Estadística para las ciencias del comportamiento"
+],
+"respuesta_disponible": true
+},
+{
+"pregunta": "¿Qué es una red neuronal convolucional?",
+"categorias_esperadas": [],
+"fuentes_esperadas": [],
+"respuesta_disponible": false
+},
+{
+"pregunta": "¿Quién es el presidente de Francia en este momento?",
+"categorias_esperadas": [],
+"fuentes_esperadas": [],
+"respuesta_disponible": false
+}
+]

@@ -15,46 +15,99 @@ El proyecto incorpora observabilidad mediante Arize Phoenix, instrumentación co
 ## Arquitectura
 
 ```text
-                        Cliente
-                           |
-                           v
-                    FastAPI / REST
-                           |
-                 +---------+---------+
-                 |                   |
-                 v                   v
-           Estado en Redis     Cola de tareas
-                                     |
-                                     v
-                                   Worker
-                                     |
-                                     v
-                                  LangGraph
-                                     |
-                                  Supervisor
-                                     |
-                     +---------------+---------------+
-                     |                               |
-                     v                               v
-               Agente profesor                Agente evaluador
-                     |                               |
-                     +---------------+---------------+
-                                     |
-                             Recuperador híbrido
-                                     |
-                             Base de conocimientos
-                                     |
-                                     v
-                             Revisión humana (HITL)
-                                     |
-                                     v
-                                  Síntesis
-                                     |
-                                     v
-                                Resultado final
+                         Cliente
+                            |
+                            v
+                     FastAPI / REST
+                            |
+                 +----------+----------+
+                 |                     |
+                 v                     v
+           Estado en Redis       Cola de tareas
+                                       |
+                                       v
+                                     Worker
+                                       |
+                                       v
+                                    LangGraph
+                                       |
+                                   Supervisor
+                                       |
+                      +----------------+----------------+
+                      |                                 |
+                      v                                 v
+                Agente profesor                 Agente evaluador
+                      |                                 |
+                      +----------------+----------------+
+                                       |
+                              Recuperador híbrido
+                                       |
+                              Base de conocimientos
+                                       |
+                                       v
+                              Revisión humana (HITL)
+                                       |
+                                       v
+                                    Síntesis
+                                       |
+                                       v
+                                  Resultado final
 ```
 
 El diagrama representa los componentes principales y sus relaciones funcionales. El orden efectivo de ejecución depende de las decisiones del supervisor y de las condiciones definidas en el grafo.
+
+---
+
+## Flujo Human-in-the-loop
+
+Cuando el Supervisor determina que debe utilizarse el agente evaluador, el flujo pasa previamente por el nodo de aprobación humana.
+
+```text
+Supervisor
+    │
+    ▼
+Human Approval
+    │
+    ▼
+interrupt()
+    │
+    ▼
+WAITING_APPROVAL
+    │
+    │ POST /approve/{job_id}
+    ▼
+Redis
+    │
+    ▼
+Worker
+    │
+    ▼
+Command(resume=...)
+    │
+    ▼
+Evaluador
+    │
+    ├── revisión necesaria ──► Human Approval
+    │
+    └── evaluación final ───► Supervisor
+                                  │
+                                  ▼
+                               Síntesis
+                                  │
+                                  ▼
+                              completed
+```
+
+El flujo utiliza `interrupt()` para pausar la ejecución del grafo y `Command(resume=...)` para continuarla una vez recibida la decisión humana.
+
+La intervención humana puede:
+
+- **Aprobar** la evaluación y continuar el flujo.
+- **Rechazar** la evaluación proporcionando feedback para que el evaluador vuelva a analizar la respuesta.
+
+El feedback humano se incorpora a la siguiente evaluación y se persiste junto con los demás eventos de intervención.
+
+---
 
 ### Componentes principales
 
@@ -92,11 +145,71 @@ La herramienta de evaluación utiliza umbrales heurísticos para asignar una de 
 
 Estos umbrales no están calibrados empíricamente. La similitud semántica constituye una señal de comparación con los documentos recuperados, pero no es por sí sola una medida definitiva de la calidad conceptual de una respuesta.
 
-### Análisis de la configuración del recuperador
+### Configuración del recuperador
 
-*Sección pendiente de integrar.*
+El recuperador utiliza `EnsembleRetriever` para combinar los resultados de BM25 y de la búsqueda vectorial. La configuración seleccionada a partir de las pruebas históricas es:
 
-En esta sección se incorporará el análisis experimental de la Pre-Entrega 4, incluyendo las configuraciones de pesos evaluadas, los criterios de comparación, los resultados obtenidos y la justificación de la configuración seleccionada para el sistema final.
+| Parámetro | Valor |
+|---|---:|
+| Modelo de embeddings | `sentence-transformers/all-MiniLM-L6-v2` |
+| Almacenamiento vectorial | Pinecone |
+| Métrica de similitud vectorial | Coseno |
+| Tamaño de chunk | 400 tokens |
+| Solapamiento entre chunks | 100 tokens |
+| `top-k` | 5 |
+| Peso de BM25 | 0.25 |
+| Peso de búsqueda vectorial | 0.75 |
+
+Esta configuración busca equilibrar la coincidencia léxica con la recuperación semántica. Los parámetros fueron seleccionados mediante una evaluación histórica sobre un Golden Set específico, cuyos resultados se presentan a continuación.
+
+### Evaluación histórica del recuperador
+
+Durante la Pre-Entrega 4 se realizaron experimentos para analizar el efecto del tamaño de los chunks y de la ponderación de los recuperadores BM25 y vectorial.
+
+La evaluación utilizó un Golden Set y las métricas **Precision@5** y **Recall@5**. Se compararon distintos tamaños de chunk manteniendo un solapamiento de 100 tokens.
+
+**Importante:** estos resultados corresponden a la evaluación histórica del recuperador en una versión anterior del proyecto. Aunque la estrategia de recuperación se conserva, la arquitectura y las interfaces de los agentes cambiaron durante el desarrollo del sistema multiagente final. Por lo tanto, los resultados no constituyen una evaluación integral del sistema final ni pueden considerarse directamente reproducibles mediante el código actual sin adaptar y validar el procedimiento de evaluación.
+
+#### Recall@5
+
+La Figura 1 muestra el Recall@5 obtenido para diferentes combinaciones de pesos entre BM25 y búsqueda vectorial, utilizando distintos tamaños de chunk.
+
+**Figura 1.** Recall@5 según la proporción de pesos entre BM25 y búsqueda vectorial para diferentes tamaños de chunk.
+
+![Recall@5](evaluation/retrieval/figures/recall_at_5.png)
+
+Los valores más altos de Recall@5 se obtuvieron con chunks de 500, 400 y 300 tokens, alcanzando el 100 % para varias de las configuraciones evaluadas. En cambio, los chunks de 600 tokens presentaron un Recall menor en algunas de las configuraciones.
+
+En este conjunto de pruebas, los resultados sugieren que el tamaño de los chunks tuvo un efecto relevante sobre la capacidad del sistema para recuperar información pertinente. El comportamiento también dependió de la combinación de pesos utilizada en el `EnsembleRetriever`.
+
+**Nota sobre el gráfico:** algunas configuraciones presentan valores idénticos de Recall@5, por lo que sus líneas se superponen. En particular, las líneas verde y naranja quedan ocultas debajo de la línea roja, ya que presentan los mismos valores en las configuraciones de pesos representadas.
+
+#### Precision@5
+
+La Figura 2 presenta los resultados de Precision@5 para las mismas combinaciones de pesos y tamaños de chunk.
+
+**Figura 2.** Precision@5 según la proporción de pesos entre BM25 y búsqueda vectorial para diferentes tamaños de chunk.
+
+![Precision@5](evaluation/retrieval/figures/precision_at_5.png)
+
+Los mejores valores de Precision@5 se obtuvieron con un tamaño de chunk de 400 tokens. En este caso, la precisión alcanzó su máximo con un peso de 0.25 para BM25 y 0.75 para la búsqueda vectorial.
+
+#### Comparación de tamaños de chunk
+
+Los resultados agregados de la comparación entre tamaños de chunk fueron los siguientes:
+
+| Tamaño de chunk | Precision@5 | Recall@5 |
+|---:|---:|---:|
+| 600 tokens | 65 % | 87.5 % |
+| 500 tokens | 72.5 % | 100 % |
+| 400 tokens | 80 % | 100 % |
+| 300 tokens | 72.5 % | 100 % |
+
+A partir de estos resultados, se seleccionó un tamaño de 400 tokens porque obtuvo la mayor Precision@5 y mantuvo un Recall@5 del 100 % sobre el Golden Set utilizado.
+
+La configuración seleccionada combina ese tamaño de chunk con un solapamiento de 100 tokens, un `top-k` de 5 y pesos de 0.25 para BM25 y 0.75 para la búsqueda vectorial.
+
+Estos resultados son específicos del corpus y del Golden Set utilizados. No representan necesariamente el comportamiento del recuperador sobre otros conjuntos de documentos ni permiten inferir por sí solos la calidad de las respuestas finales generadas por los agentes.
 
 ## Sistema multiagente
 
@@ -141,7 +254,7 @@ Ejecución del grafo
 Solicitud de revisión humana
         |
         v
-     interrupt()
+    interrupt()
         |
         v
   waiting_approval
@@ -153,7 +266,7 @@ Solicitud de revisión humana
  Decisión y feedback en Redis
         |
         v
-       Worker
+      Worker
         |
         v
  Command(resume=...)
@@ -328,6 +441,8 @@ git clone <URL_DEL_REPOSITORIO>
 cd EntregaFinal_Sistema_inteligente_de_grado_de_produccion
 ```
 
+Reemplazar `<URL_DEL_REPOSITORIO>` por la URL real del repositorio.
+
 ### 2. Crear y activar el entorno virtual
 
 Crear el entorno virtual:
@@ -358,14 +473,18 @@ python -m pip install -r requirements.txt
 
 Crear un archivo `.env` tomando como referencia `.env.example` y completar las credenciales necesarias.
 
-Entre las variables utilizadas por la configuración anterior se encuentran:
+```dotenv
+# Models
+GOOGLE_API_KEY=tu_clave_de_google
+OPENAI_API_KEY=tu_clave_de_openai
+ANTHROPIC_API_KEY=tu_clave_de_anthropic
 
-```text
-GOOGLE_API_KEY=
-OPENAI_API_KEY=
-ANTHROPIC_API_KEY=
-PINECONE_API_KEY=
-INDEX_NAME=
+# Database
+PINECONE_API_KEY=tu_clave_de_pinecone
+INDEX_NAME=tu_nombre_de_indice
+
+# Redis
+REDIS_URL=redis://localhost:6379
 ```
 
 Los nombres definitivos deben coincidir con los utilizados en la configuración actual del proyecto. No deben incluirse credenciales reales en el repositorio.
@@ -394,9 +513,9 @@ Las direcciones principales son:
 
 | Servicio | Dirección |
 |---|---|
-| API y Swagger | `http://127.0.0.1:8000/docs` |
-| Esquema OpenAPI | `http://127.0.0.1:8000/openapi.json` |
-| Phoenix | `http://localhost:6006` |
+| API y Swagger | [http://127.0.0.1:8000/docs](http://127.0.0.1:8000/docs) |
+| Esquema OpenAPI | [http://127.0.0.1:8000/openapi.json](http://127.0.0.1:8000/openapi.json) |
+| Phoenix | [http://localhost:6006](http://localhost:6006) |
 
 Para detener la API y el Worker, presionar `Ctrl+C` en la terminal donde se ejecuta el script. Redis y Phoenix permanecen activos en Docker.
 
@@ -406,12 +525,12 @@ También se incorporó una alternativa mediante un script de shell para Linux. S
 
 ## Ejemplo de uso
 
-1. Iniciar la aplicación con `run.sh`.
-2. Abrir `http://127.0.0.1:8000/docs`.
+1. Iniciar la aplicación con `run.sh`. El script abre Swagger automáticamente cuando la API está disponible.
+2. Si Swagger no se abre automáticamente, acceder a [http://127.0.0.1:8000/docs](http://127.0.0.1:8000/docs).
 3. Ejecutar `POST /process` con una consulta.
-4. Copiar el `job_id` devuelto.
-5. Consultar `GET /status/{job_id}` hasta que la tarea finalice o requiera aprobación.
-6. Si el estado es `waiting_approval`, enviar una decisión mediante `POST /approve/{job_id}`.
+4. Copiar el `job_id` devuelto en la respuesta.
+5. Consultar `GET /status/{job_id}`, reemplazando `{job_id}` por el identificador copiado, hasta que la tarea finalice o requiera aprobación.
+6. Si el estado es `waiting_approval`, enviar una decisión mediante `POST /approve/{job_id}`, reemplazando `{job_id}` por el identificador de la tarea.
 7. Consultar nuevamente el estado hasta obtener el resultado final.
 8. Inspeccionar la ejecución en Phoenix y revisar la traza JSON correspondiente.
 
@@ -461,6 +580,11 @@ La estructura funcional principal es:
 ├── tests/
 ├── traces/
 ├── screenshots/
+├── evaluation/
+│   └── retrieval/
+│       └── figures/
+│           ├── recall_at_5.png
+│           └── precision_at_5.png
 ├── .env.example
 ├── compose.yml
 ├── requirements.txt
@@ -468,7 +592,7 @@ La estructura funcional principal es:
 └── README.md
 ```
 
-La lista es orientativa y deberá ajustarse a los archivos presentes en la versión final del repositorio.
+La estructura es orientativa y deberá ajustarse a los archivos presentes en la versión final del repositorio. Los gráficos de evaluación deben conservar las rutas relativas indicadas para que se visualicen correctamente en GitHub.
 
 ## Decisiones de diseño
 
