@@ -1,204 +1,196 @@
-# API de producción y monitoreo activo (Pre-Entrega 7)
+# Sistema multiagente de tutoría en Estadística y Metodología
 
-Este proyecto corresponde a la **Pre-Entrega 7 del curso de AI Engineering**.
+Sistema inteligente de tutoría académica basado en agentes especializados, recuperación híbrida de información (RAG), evaluación de respuestas y supervisión humana. La aplicación integra una API asíncrona, procesamiento en segundo plano, persistencia del estado y observabilidad de las ejecuciones.
 
-La entrega consiste en exponer mediante una API REST asíncrona el sistema multi-agente desarrollado en la Pre-Entrega 6, incorporando una arquitectura orientada a producción mediante **FastAPI + Redis + Worker + LangGraph**, persistencia del estado y checkpoints, observabilidad con **Arize Phoenix**, métricas de costo y latencia, y un flujo de **Human-in-the-loop (HITL)**.
+## Descripción general
 
-**Link video de explicación del flujo de ejecución y Human-in-the-loop:**  
-[Video de explicación](https://drive.google.com/file/d/1vc6fj9Q3QblrYEaXFmkpFuMy8TkhwZRh/view?usp=drive_link)
+El sistema permite que un usuario solicite explicaciones de conceptos de Estadística y Metodología de la Investigación, consulte fuentes bibliográficas o reciba una evaluación de sus respuestas.
 
----
+La arquitectura utiliza un grafo de agentes coordinado por un supervisor. Los agentes especializados consultan una base de conocimientos mediante un recuperador híbrido que combina búsqueda léxica y similitud semántica. Cuando corresponde, el flujo incorpora una instancia de revisión humana antes de continuar con la evaluación y la síntesis de la respuesta final.
 
-## Descripción
+La aplicación expone sus funcionalidades mediante una API REST desarrollada con FastAPI. Las tareas se procesan de manera asíncrona mediante una cola de Redis y un Worker independiente. LangGraph administra el flujo de ejecución y permite persistir el estado necesario para interrumpir y reanudar las tareas.
 
-La aplicación expone una **API REST asíncrona** que permite enviar tareas al sistema multi-agente sin bloquear la solicitud HTTP mientras se ejecuta el procesamiento.
+El proyecto incorpora observabilidad mediante Arize Phoenix, instrumentación con OpenInference, registro de trazas en JSON y tests automatizados.
 
-La arquitectura separa la recepción de solicitudes de la ejecución del sistema multi-agente:
+## Arquitectura
 
 ```text
-Cliente
-   │
-   │ POST /process
-   ▼
-FastAPI
-   │
-   │ job_id
-   ▼
-Redis Queue
-   │
-   ▼
-Worker
-   │
-   ▼
-LangGraph
-   │
-   ├── Supervisor
-   │      ├── Profesor
-   │      └── Evaluador
-   │
-   ├── Human-in-the-loop
-   │
-   └── Síntesis
+                       Cliente
+                          |
+                          v
+                   FastAPI / REST
+                          |
+                 +--------+--------+
+                 |                 |
+                 v                 v
+          Estado en Redis    Cola de tareas
+                                   |
+                                   v
+                                 Worker
+                                   |
+                                   v
+                              LangGraph
+                                   |
+                               Supervisor
+                                   |
+                     +-------------+-------------+
+                     |                           |
+                     v                           v
+               Agente profesor            Agente evaluador
+                     |                           |
+                     +-------------+-------------+
+                                   |
+                         Recuperador híbrido
+                                   |
+                         Base de conocimientos
+                                   |
+                                   v
+                         Revisión humana (HITL)
+                                   |
+                                   v
+                                Síntesis
+                                   |
+                                   v
+                            Resultado final
 ```
 
-De esta manera, el endpoint HTTP recibe la tarea, genera un identificador y la coloca en una cola de Redis. El procesamiento pesado queda a cargo de un Worker independiente.
+El diagrama representa los componentes principales y sus relaciones funcionales. El orden efectivo de ejecución depende de las decisiones del supervisor y de las condiciones definidas en el grafo.
 
-La aplicación utiliza:
+### Componentes principales
 
-- **FastAPI** para la API REST.
-- **Redis** para la cola de tareas y la persistencia del estado.
-- **LangGraph** para la orquestación del sistema multi-agente.
-- **Redis Checkpointer** para persistir el estado del grafo.
-- **Worker asíncrono** para ejecutar las tareas fuera del contexto de la solicitud HTTP.
-- **Human-in-the-loop** mediante `interrupt()` y `Command(resume=...)`.
-- **Arize Phoenix + OpenInference** para observabilidad.
-- **Trazas JSON** para conservar el detalle de las ejecuciones.
-- Manejo de errores de ejecución y actualización del estado de las tareas a `failed`.
+- **FastAPI:** recibe las solicitudes y expone los endpoints de procesamiento, consulta de estado y aprobación humana.
+- **Redis:** almacena el estado de las tareas y administra las colas de procesamiento y aprobación.
+- **Worker asíncrono:** consume las tareas pendientes y ejecuta el grafo fuera del contexto de la solicitud HTTP.
+- **LangGraph:** coordina los agentes, administra las transiciones del flujo y permite interrumpir y reanudar la ejecución.
+- **Supervisor:** decide qué agente debe intervenir y cuándo corresponde finalizar el proceso.
+- **Agente profesor:** recupera información teórica y fuentes relevantes para responder consultas académicas.
+- **Agente evaluador:** evalúa las respuestas del usuario mediante una herramienta de similitud semántica y consulta información de respaldo.
+- **Nodo de síntesis:** integra las contribuciones del sistema en una respuesta final.
+- **Arize Phoenix:** permite inspeccionar las trazas y analizar las ejecuciones instrumentadas.
+- **Trazas JSON:** conservan un registro adicional de los mensajes, las llamadas a herramientas y las intervenciones humanas.
 
----
+## Recuperación híbrida de información (RAG)
 
-## Correspondencia entre requisitos y componentes
+El sistema utiliza un recuperador híbrido que combina dos mecanismos complementarios:
 
-| Requisito | Implementación |
+- **Búsqueda léxica BM25:** recupera documentos a partir de coincidencias entre términos.
+- **Búsqueda vectorial:** utiliza embeddings para recuperar documentos semánticamente similares a la consulta.
+
+Los resultados de ambos mecanismos se combinan mediante una estrategia de ponderación para producir una lista de documentos relevantes.
+
+La recuperación híbrida se utiliza para buscar definiciones, explicaciones teóricas y fuentes bibliográficas. Los documentos recuperados constituyen el material de referencia de los agentes especializados.
+
+### Herramientas de recuperación y evaluación
+
+| Herramienta | Función |
 |---|---|
-| API REST asíncrona | `app/main.py` |
-| Crear tarea | `POST /process` |
-| Consultar estado | `GET /status/{job_id}` |
-| Aprobación humana | `POST /approve/{job_id}` |
-| Cola principal | Redis `multiagent_tasks` |
-| Cola de aprobaciones | Redis `multiagent_approvals` |
-| Estado de tareas | Redis `task_status:{job_id}` |
-| Worker | `app/worker.py` |
-| Grafo multi-agente | `app/graph_config.py` |
-| Checkpoints | `AsyncRedisSaver` |
-| Human-in-the-loop | `app/hitl.py` |
-| Observabilidad | `app/observability.py` |
-| Instrumentación | OpenInference + Phoenix |
-| Trazas detalladas | `traces/` |
-| Evidencia de observabilidad | `screenshots/` |
-| Manejo de errores | `app/errors.py` |
-| Modelos y estado | `app/schemas.py` |
-| Serialización de trazas | `app/trace_utils.py` |
+| `buscar_concepto` | Recupera contenido teórico relevante para explicar un concepto. |
+| `buscar_fuente` | Recupera información bibliográfica y números de página. |
+| `evaluar_concepto` | Compara semánticamente la respuesta del usuario con el contenido recuperado. |
 
----
+La herramienta de evaluación utiliza umbrales heurísticos para asignar una de cuatro categorías: `Mal`, `Incompleta`, `Bien` y `Muy bien`.
 
-# Arquitectura
+Estos umbrales no están calibrados empíricamente. La similitud semántica constituye una señal de comparación con los documentos recuperados, pero no es por sí sola una medida definitiva de la calidad conceptual de una respuesta.
 
-El flujo general comienza cuando el cliente realiza un `POST /process`.
+### Análisis de la configuración del recuperador
 
-```text
-Usuario
-   │
-   ▼
-POST /process
-   │
-   ▼
-FastAPI
-   │
-   ├── genera job_id
-   ├── guarda estado inicial en Redis
-   └── agrega job_id a multiagent_tasks
-              │
-              ▼
-         Redis Queue
-              │
-              ▼
-            Worker
-              │
-              ▼
-          LangGraph
-              │
-       ┌──────┴──────┐
-       ▼             ▼
-  Supervisor      Supervisor
-       │             │
-   Profesor       Evaluador
-       │             │
-       └──────┬──────┘
-              ▼
-           Síntesis
-              │
-              ▼
-          completed
-```
+*Sección pendiente de integrar.*
 
-El endpoint no permanece esperando a que termine el procesamiento multi-agente. Devuelve inmediatamente el `job_id`, que posteriormente puede utilizarse para consultar el estado de la tarea.
+En esta sección se incorporará el análisis experimental de la Pre-Entrega 4, incluyendo las configuraciones de pesos evaluadas, los criterios de comparación, los resultados obtenidos y la justificación de la configuración seleccionada para el sistema final.
 
----
+## Sistema multiagente
 
-## Flujo Human-in-the-loop
+El grafo se organiza alrededor de un supervisor y dos agentes especializados, con un nodo de síntesis para la respuesta final.
 
-Cuando el Supervisor determina que debe utilizarse el agente evaluador, el flujo pasa previamente por el nodo de aprobación humana.
+### Supervisor
+
+El supervisor utiliza salida estructurada mediante el modelo `DecisionSupervisor` para determinar el siguiente paso del flujo.
+
+Las decisiones posibles son:
+
+- `profesor`
+- `evaluador`
+- `FINISH`
+
+El grafo incorpora un límite máximo de pasos para evitar ciclos excesivos. Los agentes utilizan mecanismos de fallback entre proveedores de modelos de lenguaje cuando corresponde.
+
+### Agente profesor
+
+El agente profesor utiliza las herramientas de recuperación para localizar información relevante y elaborar explicaciones fundamentadas en la base de conocimientos.
+
+### Agente evaluador
+
+El agente evaluador utiliza la herramienta `evaluar_concepto` para obtener una categoría inicial y puede consultar fuentes o contenido teórico adicional. Cuando recibe feedback humano, vuelve a analizar la respuesta considerando las observaciones recibidas.
+
+### Síntesis
+
+El nodo de síntesis combina las contribuciones acumuladas durante la ejecución y produce una respuesta final clara y breve.
+
+## Human-in-the-loop (HITL)
+
+El sistema incorpora un mecanismo de intervención humana mediante `interrupt()` y `Command(resume=...)` de LangGraph.
+
+Cuando el flujo requiere una revisión, el grafo se interrumpe y la tarea pasa al estado `waiting_approval`. La persona puede aprobar la evaluación o rechazarla y proporcionar observaciones.
+
+El flujo de aprobación utiliza el siguiente esquema:
 
 ```text
-Supervisor
-    │
-    ▼
-Human Approval
-    │
-    ▼
-interrupt()
-    │
-    ▼
-WAITING_APPROVAL
-    │
-    │ POST /approve/{job_id}
-    ▼
-Redis
-    │
-    ▼
-Worker
-    │
-    ▼
-Command(resume=...)
-    │
-    ▼
-Evaluador
-    │
-    ├── revisión necesaria ──► Human Approval
-    │
-    └── evaluación final ───► Supervisor
-                                  │
-                                  ▼
-                               Síntesis
-                                  │
-                                  ▼
-                              completed
+Ejecución del grafo
+        |
+        v
+Solicitud de revisión humana
+        |
+        v
+     interrupt()
+        |
+        v
+  waiting_approval
+        |
+        v
+ POST /approve/{job_id}
+        |
+        v
+ Decisión y feedback en Redis
+        |
+        v
+      Worker
+        |
+        v
+ Command(resume=...)
+        |
+        v
+ Reanudación del grafo
+        |
+        +----> Reevaluación, si corresponde
+        |
+        v
+      Síntesis
+        |
+        v
+    completed
 ```
 
-El flujo utiliza `interrupt()` para pausar la ejecución del grafo y `Command(resume=...)` para continuarla una vez recibida la decisión humana.
+El feedback humano se incorpora a la siguiente evaluación cuando se solicita una revisión. El flujo puede volver a requerir intervención si la lógica del grafo así lo determina.
 
-La intervención humana puede:
+Las decisiones humanas también se registran como eventos asociados a la tarea y se incorporan a la traza JSON cuando finaliza correctamente.
 
-- **Aprobar** la evaluación y continuar el flujo.
-- **Rechazar** la evaluación proporcionando feedback para que el evaluador vuelva a analizar la respuesta.
+## API REST
 
-El feedback humano se incorpora a la siguiente evaluación y se persiste junto con los demás eventos de intervención.
+La API expone tres endpoints principales.
 
----
+### `POST /process`
 
-# API
+Recibe una consulta, genera un identificador único, guarda el estado inicial en Redis y agrega la tarea a la cola `multiagent_tasks`.
 
-## `POST /process`
-
-Recibe una consulta y crea una nueva tarea.
-
-El endpoint:
-
-1. Genera un `job_id`.
-2. Guarda el estado inicial en Redis.
-3. Agrega el `job_id` a la cola `multiagent_tasks`.
-4. Devuelve inmediatamente el identificador de la tarea.
-
-Ejemplo:
+Ejemplo de solicitud:
 
 ```json
 {
-  "query": "Quiero que evalúes mi respuesta sobre la correlación..."
+  "query": "Quiero que evalúes mi respuesta sobre la correlación."
 }
 ```
 
-Respuesta:
+Respuesta inicial:
 
 ```json
 {
@@ -207,35 +199,23 @@ Respuesta:
 }
 ```
 
----
+El procesamiento continúa en segundo plano. El cliente utiliza el identificador recibido para consultar el estado de la tarea.
 
-## `GET /status/{job_id}`
+### `GET /status/{job_id}`
 
-Permite consultar el estado de una tarea.
+Permite consultar el estado, el resultado y los posibles errores de una tarea.
 
-Los principales estados utilizados son:
+Los estados contemplados por el flujo son:
 
-```text
-pending
-processing
-waiting_approval
-completed
-failed
-```
+- `pending`
+- `processing`
+- `waiting_approval`
+- `completed`
+- `failed`
 
-El estado se almacena en Redis mediante la clave:
+### `POST /approve/{job_id}`
 
-```text
-task_status:{job_id}
-```
-
-Además del estado, se conserva información sobre la consulta, resultado y posibles errores.
-
----
-
-## `POST /approve/{job_id}`
-
-Permite responder a una solicitud de aprobación humana.
+Recibe la decisión humana y, opcionalmente, el feedback para el agente evaluador.
 
 Ejemplo de aprobación:
 
@@ -246,602 +226,142 @@ Ejemplo de aprobación:
 }
 ```
 
-Ejemplo de rechazo:
+Ejemplo de rechazo con observaciones:
 
 ```json
 {
   "decision": "reject",
-  "feedback": "Revisá la explicación y agregá un ejemplo aplicado a una investigación sobre comportamiento humano."
+  "feedback": "Revisá la explicación y agregá un ejemplo aplicado."
 }
 ```
 
-El endpoint no reanuda directamente el grafo. Guarda la decisión en Redis y la coloca en la cola `multiagent_approvals`.
+El endpoint verifica que la tarea exista y se encuentre esperando aprobación. Después guarda la decisión en Redis y la agrega a la cola `multiagent_approvals`. El Worker recupera esa información y reanuda el grafo.
 
-El Worker recupera posteriormente la aprobación y continúa la ejecución de LangGraph.
+La documentación interactiva de la API está disponible en `/docs` cuando el servidor está en ejecución.
 
----
+## Procesamiento asíncrono y persistencia
 
-# Procesamiento asíncrono
+La arquitectura desacopla la recepción de solicitudes del procesamiento de los agentes.
 
-La separación entre FastAPI y Worker permite desacoplar la recepción de las solicitudes de la ejecución del sistema multi-agente.
+La cola principal utiliza la clave `multiagent_tasks`; las aprobaciones se procesan mediante `multiagent_approvals`. El estado de cada tarea se guarda en `task_status:{job_id}`.
 
-El flujo es:
+El grafo se compila con `AsyncRedisSaver`, que permite persistir checkpoints asociados al identificador de conversación (`thread_id`). Esto permite reanudar la ejecución después de una interrupción de Human-in-the-loop.
 
-```text
-POST /process
-      │
-      ▼
-Redis
-      │
-      ▼
-multiagent_tasks
-      │
-      ▼
-Worker
-      │
-      ▼
-LangGraph
-```
+El Worker actualiza el estado de la tarea según el resultado del procesamiento. Si se produce una excepción, registra el error y marca la tarea como `failed`.
 
-FastAPI funciona como productor de tareas y el Worker como consumidor.
+## Observabilidad y trazas
 
-La cola principal utiliza:
+La instrumentación utiliza Arize Phoenix, OpenInference y OpenTelemetry para observar las ejecuciones del sistema.
 
-```text
-RPUSH
-LPOP
-```
+Phoenix permite inspeccionar las trazas y spans instrumentados, seguir la secuencia observable de ejecución y analizar las métricas disponibles de latencia y costo.
 
-De esta forma, el endpoint HTTP no queda bloqueado esperando la finalización de los agentes.
+Además, el sistema conserva trazas locales en formato JSON. Según el flujo ejecutado, estas pueden incluir:
 
----
+- Mensajes del usuario y respuestas de los agentes.
+- Llamadas y resultados de herramientas.
+- Identificación de los agentes involucrados.
+- Eventos de aprobación humana y feedback.
+- Secuencia observable de ejecución.
 
-# Redis
+Las trazas representan la ejecución observable del sistema, no el razonamiento interno no observable de los modelos.
 
-Redis cumple varias funciones dentro de la aplicación.
+La instrumentación de Phoenix utiliza el endpoint local `http://localhost:6006/v1/traces`. La interfaz web se encuentra en `http://localhost:6006`.
 
-## Estado de las tareas
+## Manejo de errores
 
-Cada tarea utiliza una clave:
+El proyecto incorpora manejo de errores en la ejecución de las herramientas, los agentes y el Worker.
 
-```text
-task_status:{job_id}
-```
+Los errores de proveedores LLM se clasifican mediante los mecanismos definidos en `app/errors.py`. Los agentes contemplan fallback entre los proveedores configurados, y los errores que impiden completar una tarea se registran en su estado.
 
-El estado contiene información como:
+La información de error queda disponible al consultar `GET /status/{job_id}`.
 
-```json
-{
-  "job_id": "...",
-  "query": "...",
-  "status": "processing",
-  "result": null,
-  "error": null
-}
-```
+## Tests automatizados
 
-Si ocurre una excepción durante la ejecución en segundo plano, el Worker actualiza el estado de la tarea a:
+El proyecto incluye una suite de tests automatizados para verificar componentes de la API, el Worker y otras funcionalidades cubiertas por los casos de prueba.
 
-```text
-failed
-```
+La suite se ejecutó con éxito en el entorno de desarrollo: **40 tests ejecutados correctamente**.
 
-Esto evita que una tarea quede indefinidamente en estado `processing`.
-
-## Colas
-
-Se utilizan dos colas principales:
-
-```text
-multiagent_tasks
-multiagent_approvals
-```
-
-La primera contiene las tareas nuevas y la segunda las decisiones de aprobación humana.
-
-## Checkpoints
-
-El grafo de LangGraph se compila utilizando `AsyncRedisSaver`:
-
-```python
-async with AsyncRedisSaver.from_conn_string(REDIS_URL) as checkpointer:
-    app = grafo.compile(checkpointer=checkpointer)
-```
-
-Esto permite persistir el estado del grafo y continuar la ejecución después de una interrupción provocada por el flujo HITL.
-
----
-
-# Worker
-
-El Worker es responsable de consumir las tareas de Redis y ejecutar el sistema multi-agente.
-
-El flujo general es:
-
-```text
-Redis Queue
-    │
-    ▼
-Worker
-    │
-    ├── status = processing
-    │
-    ▼
-LangGraph
-    │
-    ├── waiting_approval
-    │
-    └── completed
-```
-
-Si ocurre una excepción durante el procesamiento:
-
-```text
-Exception
-    │
-    ▼
-status = failed
-```
-
-Los errores quedan registrados y pueden consultarse mediante el endpoint de estado.
-
----
-
-# Sistema multi-agente
-
-El sistema mantiene la arquitectura desarrollada en la Pre-Entrega 6.
-
-Está compuesto por:
-
-- `agente_profesor`
-- `agente_evaluador`
-- `nodo_supervisor`
-- `nodo_sintesis`
-
-El estado compartido se define mediante `AgentState`.
-
-El Supervisor decide qué especialista debe intervenir:
-
-```text
-Supervisor
-    │
-    ├── profesor
-    │
-    ├── evaluador
-    │
-    └── FINISH
-```
-
-Cuando corresponde finalizar, el flujo pasa al nodo de síntesis.
-
----
-
-# Supervisor
-
-El Supervisor utiliza un modelo LLM con salida estructurada mediante `DecisionSupervisor`.
-
-Las opciones posibles son:
-
-```text
-profesor
-evaluador
-FINISH
-```
-
-El Supervisor analiza la consulta y las contribuciones acumuladas para determinar qué agente debe intervenir.
-
-También se utiliza un límite máximo de pasos:
-
-```python
-MAX_PASOS = 6
-```
-
-Esto permite evitar ciclos excesivos en el grafo.
-
-El sistema utiliza fallback entre proveedores LLM:
-
-```text
-OpenAI
-   ↓
-Anthropic
-   ↓
-Gemini
-```
-
-Si un proveedor falla, se intenta continuar con el siguiente.
-
----
-
-# Human-in-the-loop
-
-La aprobación humana se implementa mediante el mecanismo de interrupción de LangGraph.
-
-El nodo utiliza:
-
-```python
-interrupt(...)
-```
-
-Cuando se ejecuta, el grafo queda pausado y la tarea pasa a:
-
-```text
-waiting_approval
-```
-
-Posteriormente, el endpoint:
-
-```text
-POST /approve/{job_id}
-```
-
-recibe la decisión humana.
-
-El Worker recupera la decisión y utiliza:
-
-```python
-Command(
-    resume={
-        "decision": decision,
-        "feedback": feedback,
-    }
-)
-```
-
-para continuar la ejecución.
-
-## Rechazo y reevaluación
-
-Cuando el usuario rechaza la evaluación, el feedback se incorpora a la siguiente ejecución del evaluador.
-
-Por ejemplo:
-
-```text
-"Revisá la explicación y aclarale que una correlación cercana a cero
-indica ausencia de relación lineal, pero no necesariamente ausencia
-de cualquier tipo de relación entre las variables. Agregá un ejemplo
-aplicado a una investigación sobre comportamiento humano."
-```
-
-El evaluador vuelve a utilizar sus herramientas y realiza una nueva evaluación considerando la revisión humana.
-
-Si la evaluación vuelve a requerir intervención, el grafo puede regresar nuevamente a `human_approval`.
-
----
-
-# Persistencia de las intervenciones humanas
-
-Las decisiones humanas se almacenan temporalmente en Redis mediante:
-
-```text
-human_events:{job_id}
-```
-
-Cada evento contiene información como:
-
-```json
-{
-  "tipo": "HumanApproval",
-  "decision": "reject",
-  "feedback": "..."
-}
-```
-
-Al finalizar la tarea, estos eventos se incorporan a la traza JSON correspondiente.
-
-De esta manera, la intervención humana forma parte del registro de ejecución de la tarea.
-
----
-
-# Observabilidad
-
-La aplicación utiliza **Arize Phoenix** junto con **OpenInference** para instrumentar el sistema.
-
-La instrumentación se configura mediante:
-
-```python
-LangChainInstrumentor().instrument(
-    tracer_provider=tracer_provider
-)
-```
-
-Phoenix recibe las trazas mediante:
-
-```text
-http://localhost:6006/v1/traces
-```
-
-y la interfaz web está disponible en:
-
-```text
-http://localhost:6006
-```
-
-Las capturas almacenadas en `screenshots/` muestran la observabilidad de las ejecuciones, incluyendo:
-
-- trazas;
-- spans;
-- secuencia de ejecución;
-- componentes involucrados;
-- latencia;
-- costo;
-- ejecución concurrente;
-- flujo Human-in-the-loop.
-
-Las trazas detalladas se conservan adicionalmente en formato JSON dentro de `traces/`.
-
----
-
-# Trazas detalladas
-
-Cada ejecución genera una traza JSON con información sobre el flujo observable de la aplicación.
-
-Las trazas pueden contener:
-
-- mensajes del usuario;
-- respuestas de los agentes;
-- llamadas a herramientas;
-- resultados de herramientas;
-- agentes involucrados;
-- decisiones del workflow;
-- intervenciones humanas;
-- eventos de aprobación;
-- feedback humano.
-
-Las trazas representan la **ejecución observable del sistema**, no el razonamiento interno no observable de los modelos.
-
-Una ejecución con Human-in-the-loop puede generar diferentes etapas observables debido al mecanismo de `interrupt()` y `resume()`:
-
-```text
-Ejecución inicial
-      │
-      ▼
-Evaluador
-      │
-      ▼
-Human Approval
-      │
-      ▼
-interrupt()
-      │
-      ▼
-Resume con feedback
-      │
-      ▼
-Nueva evaluación
-      │
-      ▼
-Human Approval
-      │
-      ▼
-interrupt()
-      │
-      ▼
-Resume con aprobación
-      │
-      ▼
-Síntesis
-      │
-      ▼
-completed
-```
-
----
-
-# Prueba con cinco solicitudes concurrentes
-
-Se realizaron cinco solicitudes concurrentes mediante `POST /process`.
-
-Cada solicitud recibió un `job_id` independiente y fue procesada mediante la cola de Redis y el Worker.
-
-La corrida se utilizó como base para obtener las métricas de:
-
-- costo por ejecución;
-- costo de tokens de entrada y salida;
-- latencia;
-- p95 de latencia.
-
-Las capturas correspondientes se encuentran en:
-
-```text
-screenshots/
-```
-
-Las cinco ejecuciones también cuentan con sus respectivas trazas detalladas en:
-
-```text
-traces/
-```
-
----
-
-# Costo por ejecución
-
-El costo se calculó a partir de los tokens de entrada y salida registrados durante las ejecuciones.
-
-La evidencia de la corrida concurrente se encuentra en:
-
-```text
-screenshots/trace_plot_cost.png
-```
-
-La captura permite comparar el costo correspondiente a las cinco ejecuciones solicitadas.
-
-## Trazas de mayor costo
-
-Dentro de la corrida, las dos ejecuciones de mayor costo fueron:
-
-**Evaluar conceptualización de muestreo aleatorio**
-
-- Costo total: **USD 0.0052**
-- Input: **USD 0.0034**
-- Output: **USD 0.0017**
-
-**Evaluar conceptualización de regresión**
-
-- Costo total: **USD 0.0040**
-- Input: **USD 0.0026**
-- Output: **USD 0.0014**
-
-El detalle de estas ejecuciones se encuentra en las trazas JSON correspondientes dentro de:
-
-```text
-traces/
-```
-
----
-
-# Latencia y p95
-
-El análisis de latencia se realizó sobre las cinco ejecuciones concurrentes.
-
-La evidencia correspondiente se encuentra en:
-
-```text
-screenshots/trace_plot_latency.png
-screenshots/trace_plot_latency_values.png
-```
-
-Las capturas muestran la distribución de latencia de las ejecuciones y el cálculo del percentil 95.
-
-El **p95** permite observar una estimación de la latencia que no es superada por aproximadamente el 95 % de las solicitudes de la corrida analizada.
-
----
-
-# Manejo de errores
-
-La API y el Worker cuentan con manejo de errores para evitar que una excepción durante una ejecución deje la tarea indefinidamente en estado `processing`.
-
-Los errores de los proveedores LLM se clasifican mediante `errors.py`:
-
-```text
-RATE_LIMIT
-KEY
-UNKNOWN
-```
-
-El sistema también implementa fallback entre proveedores:
-
-```text
-OpenAI
-   ↓
-Anthropic
-   ↓
-Gemini
-```
-
-Si todos los proveedores disponibles fallan, la excepción se propaga al Worker, que actualiza el estado de la tarea a:
-
-```text
-failed
-```
-
-El error queda disponible mediante:
-
-```text
-GET /status/{job_id}
-```
-
----
-
-# Ejecución de tests
-
-El proyecto incluye tests unitarios para verificar componentes críticos de la API y del Worker.
-
-Los tests utilizan **mocking** para aislar las dependencias externas durante la ejecución de los casos de prueba.
-
-Actualmente se cubren dos casos principales:
-
-- **Creación de tareas mediante `POST /process`**: verifica la generación del `job_id`, el almacenamiento del estado inicial en Redis y la incorporación de la tarea a la cola `multiagent_tasks`.
-- **Manejo de errores del Worker**: verifica que una excepción durante la ejecución del grafo actualice correctamente el estado de la tarea a `failed` y almacene el error correspondiente.
-
-Los tests se encuentran en:
-
-```text
-tests/
-├── test_api.py
-└── test_worker.py
-```
-
-Para ejecutar todos los tests:
+Para ejecutar los tests desde el entorno virtual, se puede utilizar:
 
 ```bash
-pytest tests/ -v
+python -m pytest -v
 ```
 
-También se puede ejecutar cada archivo individualmente:
+Si el proyecto requiere inicializar dependencias externas durante la importación de algunos módulos, deben configurarse las variables de entorno correspondientes. Los tests que utilizan mocks permiten aislar las operaciones verificadas de sus dependencias externas.
 
-```bash
-pytest tests/test_api.py -v
-```
+## Requisitos
 
-```bash
-pytest tests/test_worker.py -v
-```
+Para ejecutar el proyecto se necesita:
 
-Los tests utilizan mocks para aislar las operaciones que se prueban. Sin embargo, el módulo del Worker importa el grafo de la aplicación y, durante la inicialización de sus dependencias, se requiere la configuración de Pinecone utilizada por el proyecto.
-
-Por este motivo, el entorno de ejecución de los tests debe contar con las variables de entorno necesarias para la inicialización de la aplicación.
-
----
-
-# Requisitos
-
-Para ejecutar el proyecto se requiere:
-
-- Python 3.11.x.
+- Python 3.12 o la versión compatible especificada por las dependencias del proyecto.
 - Redis.
-- Google Gemini API key.
-- Pinecone API key e índice.
-- Arize Phoenix.
-- Opcionalmente, claves de OpenAI y Anthropic para el fallback.
+- Acceso al índice de Pinecone utilizado por el recuperador.
+- Una clave de API para el proveedor LLM configurado.
+- Arize Phoenix para la observabilidad.
+- Las dependencias de Python declaradas en `requirements.txt`.
 
-Durante el desarrollo se utilizó Python 3.11.x debido a incompatibilidades de algunas dependencias del entorno de desarrollo.
+Las claves de los proveedores alternativos son necesarias si se desea utilizar el mecanismo de fallback correspondiente.
 
----
+## Instalación y configuración
 
-# Instalación
+### 1. Clonar el repositorio
 
-Crear el entorno virtual:
+```bash
+git clone <URL_DEL_REPOSITORIO>
+cd EntregaFinal_Sistema_inteligente_de_grado_de_produccion
+```
+
+### 2. Crear y activar el entorno virtual
 
 ```bash
 python -m venv .venv
 ```
 
-En Windows:
+En Windows PowerShell:
 
-```bash
-.venv\Scripts\activate
+```powershell
+.\.venv\Scripts\Activate.ps1
 ```
 
-En Linux/macOS:
+En Linux o macOS:
 
 ```bash
 source .venv/bin/activate
 ```
 
-Instalar las dependencias:
+### 3. Instalar las dependencias
 
 ```bash
-pip install -r requirements.txt
+python -m pip install -r requirements.txt
 ```
 
----
+### 4. Configurar las variables de entorno
 
-# Redis
+Crear un archivo `.env` tomando como referencia `.env.example` y completar las credenciales necesarias.
 
-La aplicación utiliza:
+Entre las variables utilizadas por la configuración anterior se encuentran:
 
 ```text
-redis://localhost:6379
+GOOGLE_API_KEY=
+OPENAI_API_KEY=
+ANTHROPIC_API_KEY=
+PINECONE_API_KEY=
+INDEX_NAME=
 ```
 
-Si se utiliza un contenedor Docker previamente creado:
+Los nombres definitivos deben coincidir con los utilizados en la configuración actual del proyecto. No deben incluirse credenciales reales en el repositorio.
+
+### 5. Iniciar Redis
+
+La configuración de desarrollo utiliza `redis://localhost:6379`, salvo que se haya modificado mediante variables de entorno.
+
+Si se utiliza un contenedor Docker existente:
 
 ```bash
 docker start redis
 ```
 
-Para comprobar que Redis está disponible:
+Para comprobar la conexión:
 
 ```bash
 docker exec -it redis redis-cli ping
@@ -853,297 +373,111 @@ La respuesta esperada es:
 PONG
 ```
 
----
+### 6. Iniciar Phoenix
 
-# Variables de entorno
-
-Crear un archivo `.env` a partir de `.env.example`.
-
-Las variables utilizadas son:
-
-```text
-GOOGLE_API_KEY=
-OPENAI_API_KEY=
-ANTHROPIC_API_KEY=
-PINECONE_API_KEY=
-INDEX_NAME=
-```
-
-Las claves reales no se incluyen en el repositorio.
-
-Redis no requiere una variable de entorno en la configuración actual, ya que la aplicación utiliza:
-
-```text
-redis://localhost:6379
-```
-
----
-
-# Ejecución
-
-## Phoenix
-
-Iniciar Arize Phoenix antes de ejecutar el Worker.
-
-La interfaz estará disponible en:
+Iniciar Arize Phoenix y comprobar que esté disponible en:
 
 ```text
 http://localhost:6006
 ```
 
-## API
+### 7. Iniciar la API
 
-Iniciar FastAPI:
+En una terminal con el entorno virtual activado:
 
 ```bash
 uvicorn app.main:app --reload
 ```
 
-La API estará disponible en:
+La API estará disponible en `http://localhost:8000`, con su documentación interactiva en `http://localhost:8000/docs`.
 
-```text
-http://localhost:8000
-```
+### 8. Iniciar el Worker
 
-La documentación interactiva puede consultarse en:
-
-```text
-http://localhost:8000/docs
-```
-
-## Worker
-
-En otra terminal:
+En otra terminal, con el mismo entorno virtual y las variables de entorno configuradas:
 
 ```bash
 python -m app.worker
 ```
 
-Para ejecutar correctamente el sistema deben permanecer disponibles simultáneamente:
+Para procesar tareas deben estar disponibles Redis, la API y el Worker. Phoenix debe estar activo para recibir las trazas de observabilidad.
 
-```text
-Redis
-Phoenix
-FastAPI
-Worker
-```
+## Ejemplo de uso
 
----
+1. Abrir `http://localhost:8000/docs`.
+2. Ejecutar `POST /process` con una consulta.
+3. Copiar el `job_id` devuelto.
+4. Consultar `GET /status/{job_id}` hasta que la tarea finalice o requiera aprobación.
+5. Si el estado es `waiting_approval`, enviar una decisión mediante `POST /approve/{job_id}`.
+6. Consultar nuevamente el estado hasta obtener el resultado final.
+7. Inspeccionar la ejecución en Phoenix y revisar la traza JSON correspondiente.
 
-# Cómo lanzar las peticiones
-
-La forma más sencilla de probar la API es utilizar la documentación interactiva de FastAPI disponible en:
-
-```text
-http://localhost:8000/docs
-```
-
-Desde allí se puede ejecutar `POST /process` utilizando un cuerpo como:
-
-```json
-{
-  "query": "Quiero que evalúes mi respuesta sobre la correlación: la correlación indica si dos variables están relacionadas."
-}
-```
-
-La API devuelve un `job_id`:
-
-```json
-{
-  "job_id": "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",
-  "status": "pending"
-}
-```
-
-Con ese identificador se puede consultar el estado mediante:
-
-```text
-GET /status/{job_id}
-```
-
-Si la tarea requiere intervención humana, el estado será:
-
-```text
-waiting_approval
-```
-
-En ese momento se puede utilizar:
-
-```text
-POST /approve/{job_id}
-```
-
-con un cuerpo como:
-
-```json
-{
-  "decision": "approve",
-  "feedback": ""
-}
-```
-
-o, para solicitar una revisión:
-
-```json
-{
-  "decision": "reject",
-  "feedback": "Revisá la explicación y aclarale que una correlación cercana a cero indica ausencia de relación lineal."
-}
-```
-
-El Worker recuperará la decisión desde Redis y continuará la ejecución del grafo.
-
----
-
-# Ejemplo de ejecución Human-in-the-loop
-
-Una consulta utilizada para probar el flujo fue:
-
-```text
-Quiero que evalúes mi respuesta sobre la correlación:
-
-La correlación es una medida que permite conocer si dos variables están
-relacionadas. Si la correlación es positiva, cuando una variable aumenta
-la otra también tiende a aumentar. Si es negativa, cuando una aumenta
-la otra tiende a disminuir. Una correlación cercana a cero indica que
-no existe relación entre las variables.
-```
-
-El flujo produce inicialmente un estado:
-
-```text
-waiting_approval
-```
-
-Posteriormente se envió un rechazo con el siguiente feedback:
-
-```text
-Revisá la explicación y aclarale que una correlación cercana a cero
-indica ausencia de relación lineal, pero no necesariamente ausencia
-de cualquier tipo de relación entre las variables. Agregá un ejemplo
-aplicado a una investigación sobre comportamiento humano.
-```
-
-El evaluador vuelve a analizar la respuesta considerando el feedback recibido.
-
-Finalmente se envía una aprobación:
-
-```json
-{
-  "decision": "approve",
-  "feedback": ""
-}
-```
-
-y la tarea continúa hasta finalizar:
-
-```text
-completed
-```
-
----
-
-# Tecnologías utilizadas
+## Tecnologías utilizadas
 
 - Python
-- FastAPI
-- Uvicorn
+- FastAPI y Uvicorn
 - asyncio
 - Pydantic
 - Redis
-- LangChain
-- LangChain Core
-- LangGraph
+- LangChain y LangGraph
 - LangGraph Checkpoint Redis
-- Google GenAI
-- OpenAI
-- Anthropic
+- Modelos de lenguaje de los proveedores configurados
 - Pinecone
-- Hugging Face
-- Sentence Transformers
+- Embeddings y recuperación vectorial
+- BM25 y recuperación híbrida
 - scikit-learn
-- Pandas
-- BM25
-- tiktoken
 - Arize Phoenix
-- OpenInference
-- OpenTelemetry
+- OpenInference y OpenTelemetry
 - pytest
 - Git
 
----
+## Estructura del proyecto
 
-# Estructura del proyecto
+La estructura funcional principal es:
 
 ```text
+.
 ├── app/
-│   ├── __init__.py
-│   ├── chunking.py
-│   ├── db_config.py
-│   ├── db_ingest.py
-│   ├── errors.py
+│   ├── agents/
+│   │   ├── profesor.py
+│   │   ├── evaluador.py
+│   │   ├── supervisor.py
+│   │   └── sintesis.py
 │   ├── main.py
-│   ├── models.py
 │   ├── worker.py
 │   ├── graph_config.py
 │   ├── schemas.py
-│   ├── logging_config.py
-│   ├── trace_utils.py
+│   ├── tools.py
+│   ├── retriever.py
+│   ├── db_config.py
+│   ├── errors.py
 │   ├── hitl.py
 │   ├── observability.py
-│   ├── retriever.py
-│   ├── redis.py
-│   ├── setup.py
-│   ├── tools.py
-│   └── agents/
-│       ├── profesor.py
-│       ├── evaluador.py
-│       ├── supervisor.py
-│       └── sintesis.py
-├── data/
+│   └── trace_utils.py
 ├── tests/
-│   ├── test_api.py
-│   └── test_worker.py
 ├── traces/
-│   └── *.json
 ├── screenshots/
-│   ├── *.png
-│   ├── trace_plot_cost.png
-│   ├── trace_plot_latency.png
-│   └── trace_plot_latency_values.png
 ├── .env.example
-├── .gitignore
 ├── requirements.txt
 └── README.md
 ```
 
----
+La lista es orientativa y deberá ajustarse a los archivos presentes en la versión final del repositorio.
 
-# Calidad y decisiones de diseño
+## Decisiones de diseño
 
-El proyecto incorpora las siguientes decisiones orientadas a una implementación más cercana a producción:
+Las principales decisiones de diseño son:
 
-- Uso de `async/await` para las operaciones de I/O.
-- Separación entre API y Worker.
-- Redis como mecanismo de desacoplamiento entre recepción y procesamiento.
-- Persistencia del estado de las tareas.
-- Estado explícito `failed` para errores de ejecución.
-- Pydantic para validación de las solicitudes.
-- `AgentState` para el estado compartido del grafo.
-- Checkpoints persistentes mediante Redis.
-- Human-in-the-loop mediante los mecanismos nativos de LangGraph.
-- Variables de entorno para credenciales y configuración.
-- Logging.
-- Instrumentación mediante OpenTelemetry/OpenInference.
-- Observabilidad con Arize Phoenix.
-- Persistencia de trazas detalladas en JSON.
-- Métricas de costo y latencia obtenidas sobre ejecuciones concurrentes.
-- Tests unitarios con mocking para aislar dependencias externas.
+- Separar la API del procesamiento en segundo plano.
+- Utilizar Redis como mecanismo de desacoplamiento y persistencia del estado de las tareas.
+- Utilizar checkpoints para preservar el estado del grafo durante las interrupciones.
+- Coordinar agentes especializados mediante un supervisor.
+- Incorporar recuperación híbrida para consultar una base de conocimientos.
+- Implementar Human-in-the-loop para permitir revisión y reevaluación con feedback.
+- Registrar errores y estados explícitos de finalización.
+- Instrumentar las ejecuciones para facilitar su inspección.
+- Conservar trazas detalladas de las ejecuciones.
+- Automatizar pruebas mediante una suite de tests.
 
-Una decisión central de la arquitectura es evitar que el endpoint HTTP ejecute directamente las tareas pesadas del sistema multi-agente. FastAPI recibe y encola la tarea, mientras que el Worker se ocupa de ejecutar el grafo.
+## Uso de herramientas de asistencia
 
----
-
-# Sobre el código
-
-El desarrollo se realizó tomando como referencia los ejemplos y materiales proporcionados durante el curso, documentación oficial de las herramientas utilizadas, recursos disponibles en Internet y asistencia de ChatGPT para resolver dudas conceptuales, revisar implementaciones y depurar distintos problemas durante el desarrollo.
+Durante el desarrollo se consultaron materiales del curso, documentación técnica y recursos disponibles en Internet. También se utilizó ChatGPT como apoyo para resolver dudas conceptuales, revisar implementaciones y depurar problemas durante el desarrollo.

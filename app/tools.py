@@ -7,6 +7,7 @@ from app.schemas import ResultadoConcepto, ResultadoEvaluacion, ResultadoFuente
 from app.logging_config import logger
 from app.retriever import retriever_hibrido
 
+# Faltaron algunas validaciones que habria que hacer para evitar que tome cosas vacias o cosas asi
 
 @tool # el decorador ya establece una estructura. Eso es útil, pero no establece por sí solo restricciones como longitud mínima, longitud máxima o cadenas no vacías.
 async def buscar_concepto(consulta: str) -> list[ResultadoConcepto]:
