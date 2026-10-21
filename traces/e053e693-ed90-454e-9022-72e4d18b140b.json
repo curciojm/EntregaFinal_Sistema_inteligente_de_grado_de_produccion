@@ -1,0 +1,31 @@
+[
+  {
+    "tipo": "HumanMessage",
+    "contenido": "La regresión implica calcular el promedio de dos grupos y ver quien de esos grupos tiene el mayor promedio"
+  },
+  {
+    "tipo": "AIMessage",
+    "contenido": "Evaluación: Incompleta\n\nTu respuesta es incorrecta porque confundís el concepto de análisis de regresión con una prueba de comparación de medias (como una prueba t para muestras independientes, donde se calculan promedios de grupos para ver cuál es mayor). \n\nEn estadística, **la regresión** no consiste en comparar promedios entre grupos, sino en utilizar la relación matemática entre dos o más variables con el propósito de **predecir** los valores de una variable (variable dependiente o $Y$) a partir de los valores de otra variable (variable independiente o $X$), utilizando comúnmente una línea o recta de mejor ajuste (como la recta de regresión por mínimos cuadrados).\n\n### Ejemplo de utilización de la regresión:\nSi quisiéramos estudiar la relación entre las horas de sueño previas y la cantidad de palabras recordadas en una prueba de memoria, podríamos utilizar un análisis de regresión lineal. En este caso:\n- La **variable independiente ($X$)** serían las horas de sueño.\n- La **variable dependiente ($Y$)** sería la cantidad de palabras recordadas.\nA través de la ecuación de la recta de regresión, podríamos **predecir** cuántas palabras recordaría en promedio una persona que duerme, por ejemplo, 7 horas, basándonos en los datos observados en la muestra.\n\nPuedes profundizar en este tema y revisar las ecuaciones de predicción en:\n* **Fuente:** *Pagano 2006 CAP 7 - Estadística para las ciencias del comportamiento* (Páginas 5, 10, 11, 13 y 22).",
+    "agente": "evaluador"
+  },
+  {
+    "tipo": "AIMessage",
+    "contenido": "Evaluación: Incompleta\n\nTu respuesta menciona correctamente que el análisis de regresión sirve para predecir los valores de una variable dependiente en función de una variable independiente, lo cual capta la idea central de la técnica. Sin embargo, la explicación resulta incompleta ya que no detalla cómo se establece dicha relación matemática ni menciona elementos clave como la recta de mejor ajuste (por ejemplo, mediante mínimos cuadrados) o las condiciones de linealidad y el error de estimación.\n\nPara mejorar tu formulación y lograr una respuesta completa, debés tener en cuenta que el análisis de regresión utiliza la relación matemática entre dos o más variables con el propósito de **predecir** los valores de una variable dependiente ($Y$) a partir de los valores de otra independiente ($X$), empleando comúnmente una recta de regresión.\n\nPuedes profundizar en las ecuaciones de predicción, el criterio de mínimos cuadrados y las condiciones de aplicabilidad en:\n* **Fuente:** *Pagano 2006 CAP 7 - Estadística para las ciencias del comportamiento* (Páginas 5, 10, 11, 13 y 22).",
+    "agente": "evaluador"
+  },
+  {
+    "tipo": "AIMessage",
+    "contenido": "La afirmación original es incorrecta. Confunde el análisis de regresión con una prueba de comparación de medias (como la prueba t). \n\nEn estadística, **la regresión** no consiste en comparar promedios entre grupos, sino en utilizar la relación matemática entre variables con el propósito de **predecir** los valores de una variable dependiente ($Y$) a partir de los valores de otra variable independiente ($X$). Esto se realiza comúnmente empleando una recta de mejor ajuste (como la recta de regresión por mínimos cuadrados).\n\n**Ejemplo:**  \nSi queremos estudiar la relación entre las horas de sueño ($X$) y la cantidad de palabras recordadas en una prueba de memoria ($Y$), un análisis de regresión nos permite predecir cuántas palabras recordaría una persona en función de las horas que durmió.",
+    "agente": "sintesis"
+  },
+  {
+    "tipo": "HumanApproval",
+    "decision": "reject",
+    "feedback": "Ademas de corregir en caso de que no este correcto, agrega un ejemplo de utilizacion de la regresion que implique predecir cantidad de palabras recordadas en funcion de las horas de sueño"
+  },
+  {
+    "tipo": "HumanApproval",
+    "decision": "approve",
+    "feedback": ""
+  }
+]

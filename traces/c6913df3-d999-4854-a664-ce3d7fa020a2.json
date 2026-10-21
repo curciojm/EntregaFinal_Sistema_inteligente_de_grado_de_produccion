@@ -1,0 +1,31 @@
+[
+  {
+    "tipo": "HumanMessage",
+    "contenido": "La regresión consiste en calcular los promedios que obtuvo cada grupo y ver cual tiene el promedio mas grande"
+  },
+  {
+    "tipo": "AIMessage",
+    "contenido": "Evaluación: Incompleta\n\nTu respuesta es incompleta. Lo que describís se acerca más al cálculo de promedios o comparación de grupos (como en una prueba t o un análisis de varianza), pero no define correctamente en qué consiste la **regresión**. \n\nEn estadística y metodología, la regresión (específicamente la línea o análisis de regresión) es una técnica que se utiliza para estudiar la relación entre variables cuantitativas y realizar **predicciones**. En lugar de solo comparar promedios entre grupos, la regresión busca encontrar la línea que mejor se ajuste a los datos (por el método de mínimos cuadrados) para poder estimar el valor de una variable a partir de otra.\n\n### Ejemplo con el comportamiento humano:\nUn ejemplo clásico en psicología y ciencias del comportamiento es investigar si **es posible utilizar la estatura de los niños a los 3 años para predecir su estatura en la edad adulta**. Mediante un análisis de regresión, se traza una línea de mejor ajuste con datos observados de distintas personas para calcular o predecir qué altura aproximada tendrá un niño de 3 años cuando cumpla 20 años. Otro ejemplo podría ser analizar la relación entre la cantidad de horas que los alumnos de primaria dedican a mirar televisión y su habilidad para la lectura, permitiendo predecir el rendimiento lector en función del tiempo frente a la pantalla.\n\nPodés profundizar sobre este tema en:\n- **Pagano, R. (2006).** *Estadística para las ciencias del comportamiento*. Capítulo 7 (\"Regresión lineal\"), páginas 10, 11, 13 y 22.",
+    "agente": "evaluador"
+  },
+  {
+    "tipo": "AIMessage",
+    "contenido": "Evaluación: Bien\n\nTu respuesta es correcta y aborda los aspectos centrales del concepto de **regresión**: señalás adecuadamente que se trata de una técnica estadística para estudiar la relación entre variables y mencionás su utilidad para realizar predicciones y encontrar el ajuste de los datos. \n\nPara que tu explicación sea aún más completa, podrías precisar que esta técnica busca modelar la relación funcional entre variables (generalmente diferenciando entre una variable dependiente y una o más independientes) y que el ajuste suele realizarse mediante métodos específicos como el de mínimos cuadrados, permitiendo estimar o predecir valores con mayor precisión.\n\nPodés profundizar sobre este tema en:\n- **Pagano, R. (2006).** *Estadística para las ciencias del comportamiento*, Capítulo 7 (\"Regresión lineal\"), páginas 10, 11, 13 y 22.",
+    "agente": "evaluador"
+  },
+  {
+    "tipo": "AIMessage",
+    "contenido": "La **regresión** no consiste simplemente en calcular y comparar promedios entre grupos, sino que es una técnica estadística utilizada para estudiar la relación entre variables cuantitativas y realizar **predicciones**. \n\nSu objetivo principal es encontrar la línea de mejor ajuste a los datos (habitualmente mediante el método de mínimos cuadrados) para modelar la relación funcional entre ellos, lo que permite estimar o predecir el valor de una variable a partir de otra. \n\n* **Ejemplo:** En ciencias del comportamiento, se puede utilizar un análisis de regresión para estudiar si es posible predecir la estatura adulta de una persona a partir de su estatura a los 3 años, o para analizar cómo las horas de exposición a la televisión influyen en el rendimiento de lectura.",
+    "agente": "sintesis"
+  },
+  {
+    "tipo": "HumanApproval",
+    "decision": "reject",
+    "feedback": "Agregale como feedback algun ejemplo con el comportamiento humano"
+  },
+  {
+    "tipo": "HumanApproval",
+    "decision": "approve",
+    "feedback": ""
+  }
+]

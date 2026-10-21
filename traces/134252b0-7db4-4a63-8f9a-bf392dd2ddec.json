@@ -1,0 +1,31 @@
+[
+  {
+    "tipo": "HumanMessage",
+    "contenido": "La probabilidad es una medida que indica qué tan posible es que ocurra un evento. Se expresa con un valor entre 0 y 1, donde 0 significa que el evento es imposible y 1 significa que seguramente va a ocurrir. Por ejemplo, si lanzamos una moneda, la probabilidad de obtener cara es 0,5 porque hay dos resultados posibles y uno de ellos es cara"
+  },
+  {
+    "tipo": "AIMessage",
+    "contenido": "Evaluación: Bien\n\nTu explicación es muy correcta y adecuada, especialmente para un estudiante de primer año de la universidad. Comprendés perfectamente los aspectos fundamentales de la probabilidad: el rango de valores (de 0 a 1), el significado de los extremos (imposible y seguro) y diste un ejemplo claro y preciso con el lanzamiento de una moneda.\n\nPara mejorar aún más tu respuesta y darle un rigor más académico, podrías mencionar formalmente que la probabilidad de un evento se calcula como el cociente entre el número de resultados favorables y el número total de resultados posibles igualmente probables.\n\nPodés profundizar en este tema consultando la bibliografía de la materia, específicamente en *Pagano 2006 CAP 8 - Estadística para las ciencias del comportamiento* (páginas 1 a 4).",
+    "agente": "evaluador"
+  },
+  {
+    "tipo": "AIMessage",
+    "contenido": "Evaluación: Bien\n\nTu explicación es muy correcta y adecuada, especialmente para un nivel introductorio. Comprendés perfectamente los aspectos fundamentales de la probabilidad: el rango de valores (de 0 a 1), el significado de los extremos (imposible y seguro) y diste un ejemplo claro y preciso con el lanzamiento de una moneda.\n\nPara mejorar aún más tu respuesta y darle un mayor rigor académico, podrías mencionar formalmente que la probabilidad de un evento también puede expresarse como el cociente entre el número de resultados favorables y el número total de resultados posibles igualmente probables.\n\nPodés profundizar en este tema consultando la bibliografía de la materia, específicamente en *Pagano 2006 CAP 8 - Estadística para las ciencias del comportamiento* (páginas 1 a 4).",
+    "agente": "evaluador"
+  },
+  {
+    "tipo": "AIMessage",
+    "contenido": "Tu explicación es muy correcta y adecuada para un nivel introductorio. Comprendés perfectamente los aspectos fundamentales de la probabilidad: el rango de valores (de 0 a 1), el significado de los extremos (imposible y seguro) y diste un ejemplo claro y preciso con el lanzamiento de una moneda.\n\nPara darle un mayor rigor académico, podés mencionar formalmente que la probabilidad de un evento se calcula como el cociente entre el número de resultados favorables y el número total de resultados posibles igualmente probables.\n\n**Para profundizar:** \nPodés consultar la bibliografía de la materia en *Pagano (2006), Capítulo 8: Estadística para las ciencias del comportamiento* (páginas 1 a 4).",
+    "agente": "sintesis"
+  },
+  {
+    "tipo": "HumanApproval",
+    "decision": "reject",
+    "feedback": "Tene en cuenta que la explicacion es para un estudiante de primer año de la universidad"
+  },
+  {
+    "tipo": "HumanApproval",
+    "decision": "approve",
+    "feedback": ""
+  }
+]

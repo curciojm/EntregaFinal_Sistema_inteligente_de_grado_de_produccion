@@ -1,0 +1,31 @@
+[
+  {
+    "tipo": "HumanMessage",
+    "contenido": "La muestra aleatoria consiste en una seleccion de personas de manera intencional"
+  },
+  {
+    "tipo": "AIMessage",
+    "contenido": "Evaluación: Incompleta\n\nTu respuesta presenta un error conceptual importante: afirmas que la muestra aleatoria se selecciona de manera *intencional*, cuando en realidad es exactamente lo opuesto. Una selección intencional corresponde a un muestreo no probabilístico (donde el investigador elige a los sujetos según determinados criterios de conveniencia o juicio). \n\nPor el contrario, una **muestra aleatoria** (o probabilística) es aquella en la que todos los miembros de la población tienen una probabilidad conocida y distinta de cero (idealmente la misma) de ser seleccionados, garantizando la imparcialidad y permitiendo generalizar los resultados mediante leyes de probabilidad.\n\n### Ejemplo de investigación con humanos\nPara ilustrarlo correctamente, imagina que un investigador quiere estudiar el nivel de estrés en los estudiantes universitarios de una ciudad:\n* **Muestra aleatoria (Correcto):** El investigador obtiene el listado completo de todos los estudiantes matriculados de la universidad y, mediante un sorteo computarizado (números aleatorios), selecciona a 200 estudiantes. Aquí, cualquier alumno tiene exactamente la misma oportunidad de ser elegido y la selección no depende de la voluntad o intención del investigador.\n* **Muestra intencional (Incorrecto):** El investigador se sitúa en la entrada de la facultad y encuesta únicamente a los estudiantes que pasan por allí a la hora del almuerzo. Esto es intencional (o por conveniencia), por lo que no es una muestra aleatoria y no representa adecuadamente a toda la población.\n\n### Bibliografía recomendada\nPuedes profundizar en este tema y revisar los tipos de muestreo en:\n* *Pagano 2006 - Estadística para las ciencias del comportamiento* (Capítulo 8, página 2).\n* *Sampieri 2018 - Metodología de la investigación* (Capítulo 8).",
+    "agente": "evaluador"
+  },
+  {
+    "tipo": "AIMessage",
+    "contenido": "Evaluación: Incompleta\n\nTu respuesta presenta un error conceptual importante: afirmas que la muestra aleatoria se selecciona de manera *intencional*, cuando en realidad es exactamente lo opuesto. Una selección intencional corresponde a un muestreo no probabilístico (donde el investigador elige a los sujetos según determinados criterios de conveniencia o juicio).\n\nPor el contrario, una **muestra aleatoria** (o probabilística) es aquella en la que todos los miembros de la población tienen una probabilidad conocida y distinta de cero (idealmente la misma) de ser seleccionados, garantizando la imparcialidad y permitiendo generalizar los resultados mediante leyes de probabilidad.\n\n### Ejemplo de investigación\nPara ilustrarlo correctamente, como se señala en la literatura especializada (por ejemplo, en *Pagano 2006*, Capítulo 8, página 2), una muestra aleatoria requiere un proceso en el cual se asegure que cada posible miembro de la población tenga la misma probabilidad de ser seleccionado:\n* **Muestra aleatoria (Correcto):** El investigador utiliza un procedimiento imparcial —como una tabla de números aleatorios o un sorteo computarizado— para elegir a los sujetos de la población, de modo que la selección no dependa de su voluntad o intención.\n* **Muestra intencional (Incorrecto):** El investigador selecciona a los sujetos según su propio juicio o conveniencia (por ejemplo, encuestando a las personas que tiene más a mano), lo cual no garantiza la representatividad estadística ni la aleatoriedad.\n\n### Bibliografía recomendada\nPuedes profundizar en este tema y revisar los tipos de muestreo en:\n* *Pagano 2006 - Estadística para las ciencias del comportamiento* (Capítulo 8, página 2).\n* *Sampieri 2018 - Metodología de la investigación* (Capítulos 8, páginas 2-3 y 11).",
+    "agente": "evaluador"
+  },
+  {
+    "tipo": "AIMessage",
+    "contenido": "La afirmación es **falsa** (la respuesta original es incorrecta). \n\nUna **muestra aleatoria** (o probabilística) **no se selecciona de manera intencional**, sino todo lo contrario: es aquella en la que todos los miembros de la población tienen una probabilidad conocida y distinta de cero (idealmente la misma) de ser elegidos. Este proceso se realiza mediante métodos imparciales (como un sorteo computarizado o tablas de números aleatorios) para garantizar que la selección no dependa de la voluntad o juicio del investigador.\n\nPor el contrario, una selección *intencional* corresponde a un **muestreo no probabilístico** (o por conveniencia), donde el investigador elige a los sujetos según su propio criterio, sin garantizar la representatividad estadística de toda la población.",
+    "agente": "sintesis"
+  },
+  {
+    "tipo": "HumanApproval",
+    "decision": "reject",
+    "feedback": "Agregar a la correccion un ejemplo de investigacion con humanos"
+  },
+  {
+    "tipo": "HumanApproval",
+    "decision": "approve",
+    "feedback": ""
+  }
+]

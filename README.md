@@ -15,43 +15,43 @@ El proyecto incorpora observabilidad mediante Arize Phoenix, instrumentación co
 ## Arquitectura
 
 ```text
-                       Cliente
-                          |
-                          v
-                   FastAPI / REST
-                          |
-                 +--------+--------+
-                 |                 |
-                 v                 v
-          Estado en Redis    Cola de tareas
-                                   |
-                                   v
-                                 Worker
-                                   |
-                                   v
-                              LangGraph
-                                   |
-                               Supervisor
-                                   |
-                     +-------------+-------------+
-                     |                           |
-                     v                           v
-               Agente profesor            Agente evaluador
-                     |                           |
-                     +-------------+-------------+
-                                   |
-                         Recuperador híbrido
-                                   |
-                         Base de conocimientos
-                                   |
-                                   v
-                         Revisión humana (HITL)
-                                   |
-                                   v
-                                Síntesis
-                                   |
-                                   v
-                            Resultado final
+                        Cliente
+                           |
+                           v
+                    FastAPI / REST
+                           |
+                 +---------+---------+
+                 |                   |
+                 v                   v
+           Estado en Redis     Cola de tareas
+                                     |
+                                     v
+                                   Worker
+                                     |
+                                     v
+                                  LangGraph
+                                     |
+                                  Supervisor
+                                     |
+                     +---------------+---------------+
+                     |                               |
+                     v                               v
+               Agente profesor                Agente evaluador
+                     |                               |
+                     +---------------+---------------+
+                                     |
+                             Recuperador híbrido
+                                     |
+                             Base de conocimientos
+                                     |
+                                     v
+                             Revisión humana (HITL)
+                                     |
+                                     v
+                                  Síntesis
+                                     |
+                                     v
+                                Resultado final
 ```
 
 El diagrama representa los componentes principales y sus relaciones funcionales. El orden efectivo de ejecución depende de las decisiones del supervisor y de las condiciones definidas en el grafo.
@@ -153,7 +153,7 @@ Solicitud de revisión humana
  Decisión y feedback en Redis
         |
         v
-      Worker
+       Worker
         |
         v
  Command(resume=...)
@@ -161,13 +161,13 @@ Solicitud de revisión humana
         v
  Reanudación del grafo
         |
-        +----> Reevaluación, si corresponde
+        +----> Reevaluación o aclaración, si corresponde
         |
         v
       Síntesis
         |
         v
-    completed
+     completed
 ```
 
 El feedback humano se incorpora a la siguiente evaluación cuando se solicita una revisión. El flujo puede volver a requerir intervención si la lógica del grafo así lo determina.
@@ -281,20 +281,37 @@ El proyecto incluye una suite de tests automatizados para verificar componentes 
 
 La suite se ejecutó con éxito en el entorno de desarrollo: **40 tests ejecutados correctamente**.
 
-Para ejecutar los tests desde el entorno virtual, se puede utilizar:
+**Importante:** antes de ejecutar los tests, es necesario iniciar la aplicación con `run.sh`. Algunos tests requieren que los servicios reales estén disponibles, por lo que no alcanza con ejecutar la suite de manera aislada.
+
+### Procedimiento de ejecución
+
+1. Abrir una terminal en la carpeta raíz del proyecto.
+2. Iniciar la aplicación ejecutando `run.sh`.
+3. Esperar a que Redis, Phoenix, FastAPI y el Worker estén disponibles.
+4. Mantener esa terminal abierta mientras se ejecutan las pruebas.
+5. Abrir una segunda terminal, activar el entorno virtual y ejecutar los tests.
+
+Comando para iniciar la aplicación:
+
+```bash
+bash run.sh
+```
+
+En una segunda terminal, ejecutar:
 
 ```bash
 python -m pytest -v
 ```
 
-Si el proyecto requiere inicializar dependencias externas durante la importación de algunos módulos, deben configurarse las variables de entorno correspondientes. Los tests que utilizan mocks permiten aislar las operaciones verificadas de sus dependencias externas.
+Al finalizar los tests, la aplicación puede detenerse con `Ctrl+C` en la terminal donde se ejecuta `run.sh`. Redis y Phoenix permanecen ejecutándose en Docker y pueden detenerse por separado cuando sea necesario.
 
 ## Requisitos
 
 Para ejecutar el proyecto se necesita:
 
 - Python 3.12 o la versión compatible especificada por las dependencias del proyecto.
-- Redis.
+- Docker y Docker Compose.
+- Redis, iniciado mediante el archivo `compose.yml`.
 - Acceso al índice de Pinecone utilizado por el recuperador.
 - Una clave de API para el proveedor LLM configurado.
 - Arize Phoenix para la observabilidad.
@@ -312,6 +329,8 @@ cd EntregaFinal_Sistema_inteligente_de_grado_de_produccion
 ```
 
 ### 2. Crear y activar el entorno virtual
+
+Crear el entorno virtual:
 
 ```bash
 python -m venv .venv
@@ -351,65 +370,50 @@ INDEX_NAME=
 
 Los nombres definitivos deben coincidir con los utilizados en la configuración actual del proyecto. No deben incluirse credenciales reales en el repositorio.
 
-### 5. Iniciar Redis
+### 5. Iniciar la aplicación
 
-La configuración de desarrollo utiliza `redis://localhost:6379`, salvo que se haya modificado mediante variables de entorno.
+El script `run.sh` automatiza el inicio de los servicios y procesos necesarios para ejecutar la aplicación en el entorno Windows utilizado durante el desarrollo.
 
-Si se utiliza un contenedor Docker existente:
-
-```bash
-docker start redis
-```
-
-Para comprobar la conexión:
+Desde la carpeta raíz del proyecto, ejecutar:
 
 ```bash
-docker exec -it redis redis-cli ping
+bash run.sh
 ```
 
-La respuesta esperada es:
+El script realiza las siguientes operaciones:
 
-```text
-PONG
-```
+1. Activa el entorno virtual de Python mediante `.venv/Scripts/activate`.
+2. Inicia Redis y Phoenix con Docker Compose, utilizando `compose.yml`.
+3. Espera hasta que Redis responda correctamente.
+4. Configura `REDIS_URL`, utilizando `redis://localhost:6379` como valor predeterminado.
+5. Inicia FastAPI mediante Uvicorn con `--reload`.
+6. Inicia el Worker con `python -m app.worker`.
+7. Espera a que FastAPI esté disponible y abre Swagger automáticamente en Windows cuando responde dentro del tiempo de espera configurado.
 
-### 6. Iniciar Phoenix
+Las direcciones principales son:
 
-Iniciar Arize Phoenix y comprobar que esté disponible en:
+| Servicio | Dirección |
+|---|---|
+| API y Swagger | `http://127.0.0.1:8000/docs` |
+| Esquema OpenAPI | `http://127.0.0.1:8000/openapi.json` |
+| Phoenix | `http://localhost:6006` |
 
-```text
-http://localhost:6006
-```
+Para detener la API y el Worker, presionar `Ctrl+C` en la terminal donde se ejecuta el script. Redis y Phoenix permanecen activos en Docker.
 
-### 7. Iniciar la API
+**Nota sobre el sistema operativo:** el `run.sh` descrito aquí utiliza rutas y comandos específicos de Windows, como `.venv/Scripts/activate`, `taskkill.exe` y `explorer.exe`.
 
-En una terminal con el entorno virtual activado:
-
-```bash
-uvicorn app.main:app --reload
-```
-
-La API estará disponible en `http://localhost:8000`, con su documentación interactiva en `http://localhost:8000/docs`.
-
-### 8. Iniciar el Worker
-
-En otra terminal, con el mismo entorno virtual y las variables de entorno configuradas:
-
-```bash
-python -m app.worker
-```
-
-Para procesar tareas deben estar disponibles Redis, la API y el Worker. Phoenix debe estar activo para recibir las trazas de observabilidad.
+También se incorporó una alternativa mediante un script de shell para Linux. Sin embargo, **esta alternativa no fue probada en Linux**, por lo que su funcionamiento en ese sistema operativo no está verificado y queda pendiente de validación.
 
 ## Ejemplo de uso
 
-1. Abrir `http://localhost:8000/docs`.
-2. Ejecutar `POST /process` con una consulta.
-3. Copiar el `job_id` devuelto.
-4. Consultar `GET /status/{job_id}` hasta que la tarea finalice o requiera aprobación.
-5. Si el estado es `waiting_approval`, enviar una decisión mediante `POST /approve/{job_id}`.
-6. Consultar nuevamente el estado hasta obtener el resultado final.
-7. Inspeccionar la ejecución en Phoenix y revisar la traza JSON correspondiente.
+1. Iniciar la aplicación con `run.sh`.
+2. Abrir `http://127.0.0.1:8000/docs`.
+3. Ejecutar `POST /process` con una consulta.
+4. Copiar el `job_id` devuelto.
+5. Consultar `GET /status/{job_id}` hasta que la tarea finalice o requiera aprobación.
+6. Si el estado es `waiting_approval`, enviar una decisión mediante `POST /approve/{job_id}`.
+7. Consultar nuevamente el estado hasta obtener el resultado final.
+8. Inspeccionar la ejecución en Phoenix y revisar la traza JSON correspondiente.
 
 ## Tecnologías utilizadas
 
@@ -428,6 +432,7 @@ Para procesar tareas deben estar disponibles Redis, la API y el Worker. Phoenix 
 - Arize Phoenix
 - OpenInference y OpenTelemetry
 - pytest
+- Docker Compose
 - Git
 
 ## Estructura del proyecto
@@ -457,7 +462,9 @@ La estructura funcional principal es:
 ├── traces/
 ├── screenshots/
 ├── .env.example
+├── compose.yml
 ├── requirements.txt
+├── run.sh
 └── README.md
 ```
 
@@ -477,6 +484,7 @@ Las principales decisiones de diseño son:
 - Instrumentar las ejecuciones para facilitar su inspección.
 - Conservar trazas detalladas de las ejecuciones.
 - Automatizar pruebas mediante una suite de tests.
+- Automatizar el inicio de los servicios y procesos mediante `run.sh`.
 
 ## Uso de herramientas de asistencia
 
