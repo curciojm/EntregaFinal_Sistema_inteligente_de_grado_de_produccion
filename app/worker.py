@@ -12,7 +12,6 @@ from app.logging_config import logger
 from app.observability import configurar_observabilidad
 from app.trace_utils import guardar_traza, serializar_traza
 
-# Si la variable no esta disponible, toma la segunda
 REDIS_URL = os.getenv("REDIS_URL", "redis://localhost:6379")
 
 QUEUE_NAME = "multiagent_tasks"
@@ -210,20 +209,13 @@ async def main_worker():
 
     logger.info("Worker started and listening for tasks")
 
-    # Redis checkpointer
-    async with AsyncRedisSaver.from_conn_string(
-        REDIS_URL
-    ) as checkpointer:
+    async with AsyncRedisSaver.from_conn_string(REDIS_URL) as checkpointer:
 
-        app = grafo.compile(
-            checkpointer=checkpointer
-        )
+        app = grafo.compile(checkpointer=checkpointer)
 
         while True:
 
-            job_id = await redis_client.lpop(
-                QUEUE_NAME
-            )
+            job_id = await redis_client.lpop(QUEUE_NAME)
 
             if job_id is not None:
                 logger.info(
