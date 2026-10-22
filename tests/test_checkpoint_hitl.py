@@ -29,7 +29,6 @@ async def test_checkpoint_hitl_se_reanuda_tras_reabrir_checkpointer():
     async with AsyncRedisSaver.from_conn_string(REDIS_URL) as checkpointer:
         app = grafo.compile(checkpointer=checkpointer)
 
-        # El grafo debe interrumpirse esperando aprobación humana.
         resultado = await app.ainvoke(
             {
                 "messages": [
@@ -60,7 +59,6 @@ async def test_checkpoint_hitl_se_reanuda_tras_reabrir_checkpointer():
 
         assert estado_recuperado.next, ("No se recuperaron los nodos pendientes.")
 
-        # Reanudar con una aprobación humana.
         resultado_final = await app.ainvoke(
             Command(
                 resume={

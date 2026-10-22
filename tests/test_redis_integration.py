@@ -1,6 +1,3 @@
-# al usar Redis síncrono (redis.Redis), no necesitás await en sus operaciones
-
-
 import json
 import os
 import uuid
@@ -169,7 +166,6 @@ async def test_approve_rechaza_tarea_que_no_espera_aprobacion(redis_client, asyn
 
         assert await redis_client.get(approval_key) is None
 
-        # No debe haberse agregado el trabajo a la cola.
         queued_approvals = await redis_client.lrange(
             APPROVAL_QUEUE,
             0,
@@ -204,7 +200,6 @@ async def test_approve_devuelve_404_para_job_inexistente(redis_client, async_cli
 
         assert await redis_client.get(approval_key) is None
 
-        # No debe agregarse el trabajo a la cola.
         queued_approvals = await redis_client.lrange(
             APPROVAL_QUEUE,
             0,

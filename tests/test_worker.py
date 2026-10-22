@@ -86,7 +86,6 @@ async def test_main_worker_completa_tarea_exitosamente():
     ]
     fake_redis.get.return_value = json.dumps(task_data)
 
-    # Simula el grafo compilado.
     fake_app = AsyncMock()
     fake_app.ainvoke.return_value = {
         "messages": [
@@ -364,7 +363,6 @@ async def test_procesar_aprobacion_vuelve_a_esperar_aprobacion():
         json.dumps(approval_data),
     ]
 
-    # Simulamos que el grafo vuelve a interrumpirse.
     fake_app = AsyncMock()
     fake_app.ainvoke.return_value = {
         "__interrupt__": ["Se necesita otra aprobación"]

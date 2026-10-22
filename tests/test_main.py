@@ -1,10 +1,3 @@
-# para ejecutar un solo test de un archivo
-# pytest tests/test_unit_main.py::test_approve_guarda_decision_y_encola_con_redis_mock -v
-# assert response.status_code == 500 es donde nos aseguramos que el codigo funcione. si escribimos el codigo bien, el codigo debe ser 500
-# python -m pip install pytest-cov permite ver que porcentaje del codigo cubrieron los tests
-# luego pytest --cov=app.main --cov=app.worker --cov-report=term-missing para ver que porcentaje de los test de main y worker cubrieron el codigo
-# al final hubo que haceR: pytest --cov=app.main --cov=app.worker --cov-report=term-missing -m "not e2e" para aislar los que necesitan el servicio porque aveces fallaban
-# si se los ejecutaba en conjunto
 import json
 from unittest.mock import AsyncMock, patch
 

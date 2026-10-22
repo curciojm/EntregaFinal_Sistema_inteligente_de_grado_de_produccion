@@ -53,17 +53,28 @@ def test_evaluacion_con_aprobacion_humana():
         tarea = response.json()
         estado = tarea["status"]
 
-        if estado == "waiting_approval":
+        if estado == "waiting_approval" and aprobaciones_enviadas == 0:
             response = httpx.post(
                 f"{BASE_URL}/approve/{job_id}",
                 json={
                     "decision": "approve",
                     "feedback": (
-                        "Continuá con la evaluación de la respuesta "
-                        "agrega un ejemplo que involucre niveles de ansiedad y frecuencia de palabras recordadas"
+                        "Continuá con la evaluación de la respuesta. "
+                        "Agregá un ejemplo que involucre niveles de ansiedad "
+                        "y frecuencia de palabras recordadas."
                     ),
                 },
                 timeout=15,
+            )
+            response.raise_for_status()
+            aprobaciones_enviadas += 1
+
+        elif estado == "completed":
+            break
+
+        elif estado == "failed":
+            pytest.fail(
+                f"La tarea falló. Detalle: {tarea.get('error')}"
             )
             response.raise_for_status()
             aprobaciones_enviadas += 1

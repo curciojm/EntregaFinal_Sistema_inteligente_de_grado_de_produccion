@@ -29,7 +29,6 @@ def test_consulta_real_completa_end_to_end():
 
     with httpx.Client(base_url=BASE_URL,timeout=30) as client:
 
-        # 1. Enviar una consulta real.
         response = client.post(
             "/process",
             json={"query": query},
@@ -46,7 +45,6 @@ def test_consulta_real_completa_end_to_end():
 
         job_id = task["job_id"]
 
-        # 2. Esperar a que el worker termine.
         deadline = time.monotonic() + TIMEOUT_SECONDS
         last_status = None
 
@@ -87,7 +85,6 @@ def test_consulta_real_completa_end_to_end():
                 f"Último estado: {last_status}"
             )
 
-        # 3. Verificar el resultado persistido.
         final_response = client.get(
             f"/status/{job_id}",
         )
@@ -103,7 +100,6 @@ def test_consulta_real_completa_end_to_end():
 
     assert respuesta, "La tarea terminó sin respuesta."
 
-    # Aceptar tanto respuestas de texto como bloques de contenido.
     if isinstance(respuesta, str):
         texto_respuesta = respuesta
     elif isinstance(respuesta, list):
