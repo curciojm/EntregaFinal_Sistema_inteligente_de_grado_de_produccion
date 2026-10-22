@@ -64,7 +64,7 @@ def test_evaluacion_con_aprobacion_humana():
                         "y frecuencia de palabras recordadas."
                     ),
                 },
-                timeout=15,#
+                timeout=15,
             )
             response.raise_for_status()
             aprobaciones_enviadas += 1
