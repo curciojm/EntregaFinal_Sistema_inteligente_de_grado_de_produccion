@@ -1,27 +1,3 @@
-# FastAPI se encarga de gran parte del manejo de HTTP para que vos puedas concentrarte en la lógica de tu aplicación. 
-# Y sí, una diferencia importante con Django es que en FastAPI podés definir endpoints directamente con funciones, 
-# sin necesidad de crear una clase para cada vista
-
-# ¿Qué hace FastAPI?
-# Cuando llega una petición HTTP, FastAPI se encarga, entre otras cosas, de:
-# - Identificar la ruta y el método HTTP (GET, POST, PUT, DELETE, etc.).
-# - Extraer y validar los datos de entrada mediante modelos de Pydantic.
-# - Ejecutar la función correspondiente.
-# - Convertir el resultado en una respuesta HTTP, normalmente JSON.
-# - Generar la documentación OpenAPI que Swagger utiliza.
-
-# Redis se usa mucho como caché, pero no es solamente una caché. Es un almacén de datos en memoria que también puede persistir información en disco y 
-# que ofrece estructuras de datos como listas, conjuntos, hashes y colas implementadas sobre ellas
-
-# ¿Por qué Redis y no una variable de Python?
-# Imaginá que guardás las tareas en una lista de Python dentro de FastAPI. Si el proceso se reinicia, 
-# esa información se pierde; además, otro proceso, como tu worker independiente, no podría acceder directamente a esa lista.
-
-# Con Redis, FastAPI y el worker pueden compartir los mismos datos, aunque sean procesos distintos
-
-# En síntesis: en tu arquitectura, Redis funciona como un intermediario compartido entre FastAPI y el worker, 
-# almacenando los estados y las tareas pendientes. No lo estás usando principalmente como caché.
-
 import os
 import json
 import uuid
@@ -40,9 +16,7 @@ APPROVAL_QUEUE = "multiagent_approvals"
 APPROVAL_PREFIX = "approval_data:"
 
 
-app = FastAPI(
-    title="Entrega Final - Intelligent System"
-)
+app = FastAPI(title="Entrega Final - Intelligent System")
 
 
 redis_client = aioredis.from_url(
@@ -52,8 +26,6 @@ redis_client = aioredis.from_url(
 
 
 @app.post("/process", response_model=TaskResponse)
-# FAST API VALIDA SEGUN EL ESQUEMA CREADO Y PUEDE CREAR EL JSON
-# Cada caja de fast api sera visualizada con el swagger
 async def create_task(request: TaskRequest):
     job_id = str(uuid.uuid4())
 
@@ -132,7 +104,7 @@ async def approve_task(
             status_code=400,
             detail="Job is not waiting for approval",
         )
-    # approve, reject, failed etc
+
     approval_data = {
         "decision": request.decision,
         "feedback": request.feedback,

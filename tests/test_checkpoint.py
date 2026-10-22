@@ -58,9 +58,7 @@ def crear_grafo():
 
 @pytest.mark.asyncio
 @pytest.mark.integration
-async def test_checkpoint_persiste_tras_reabrir_checkpointer(
-    redis_client,
-):
+async def test_checkpoint_persiste_tras_reabrir_checkpointer(redis_client):
     thread_id = f"test-checkpoint-{uuid4()}"
     config = {
         "configurable": {
@@ -70,10 +68,7 @@ async def test_checkpoint_persiste_tras_reabrir_checkpointer(
 
     builder = crear_grafo()
 
-    # Primera instancia: ejecuta el grafo y guarda el checkpoint.
-    async with AsyncRedisSaver.from_conn_string(
-        REDIS_URL
-    ) as checkpointer:
+    async with AsyncRedisSaver.from_conn_string(REDIS_URL) as checkpointer:
         app = builder.compile(checkpointer=checkpointer)
 
         await app.ainvoke(
@@ -87,19 +82,11 @@ async def test_checkpoint_persiste_tras_reabrir_checkpointer(
             "estado persistido en Redis"
         )
 
-    # Segunda instancia: simula la reapertura del Checkpointer.
-    async with AsyncRedisSaver.from_conn_string(
-        REDIS_URL
-    ) as checkpointer:
+    async with AsyncRedisSaver.from_conn_string(REDIS_URL) as checkpointer:
         app = builder.compile(checkpointer=checkpointer)
 
         estado_recuperado = await app.aget_state(config)
 
-        assert estado_recuperado.values["mensaje"] == (
-            "estado persistido en Redis"
-        )
-        assert (
-            estado_recuperado.config["configurable"]["thread_id"]
-            == thread_id
-        )
+        assert estado_recuperado.values["mensaje"] == ("estado persistido en Redis")
+        assert (estado_recuperado.config["configurable"]["thread_id"] == thread_id)
         assert estado_recuperado.created_at is not None

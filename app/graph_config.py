@@ -10,9 +10,7 @@ from app.agents.sintesis import nodo_sintesis
 from app.schemas import AgentState
 
 
-def enrutar(
-    state: AgentState,
-) -> Literal["profesor", "evaluador", "sintesis"]:
+def enrutar(state: AgentState) -> Literal["profesor", "evaluador", "sintesis"]:
 
     if state["next_agent"] == "FINISH":
         return "sintesis"
@@ -20,15 +18,10 @@ def enrutar(
     return state["next_agent"]
 
 
-def enrutar_aprobacion(
-    state: AgentState,
-) -> Literal["evaluador"]:
-
+def enrutar_aprobacion(state: AgentState) -> Literal["evaluador"]:
     return "evaluador"
 
-def enrutar_despues_evaluador(
-    state: AgentState,
-) -> Literal["supervisor", "human_approval"]:
+def enrutar_despues_evaluador(state: AgentState) -> Literal["supervisor", "human_approval"]:
 
     if state.get("revision_humana", False):
         return "human_approval"

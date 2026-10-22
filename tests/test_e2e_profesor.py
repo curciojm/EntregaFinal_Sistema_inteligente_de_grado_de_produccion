@@ -28,10 +28,7 @@ def test_consulta_real_completa_end_to_end():
         "Explicá brevemente qué es la regresión y cómo se calcula."
     )
 
-    with httpx.Client(
-        base_url=BASE_URL,
-        timeout=30,
-    ) as client:
+    with httpx.Client(base_url=BASE_URL,timeout=30) as client:
 
         # 1. Enviar una consulta real.
         response = client.post(
@@ -125,8 +122,6 @@ def test_consulta_real_completa_end_to_end():
             f"{type(respuesta).__name__}"
         )
 
-    assert texto_respuesta.strip(), (
-        "La tarea terminó sin una respuesta de texto útil."
-    )
+    assert texto_respuesta.strip(), ("La tarea terminó sin una respuesta de texto útil.")
     assert result.get("error") is None
 

@@ -5,7 +5,7 @@ from phoenix.otel import register
 def configurar_observabilidad():
 
     tracer_provider = register(
-        project_name="multiagente-estadistica-PreEntrega7",
+        project_name="multiagente-estadistica",
         endpoint="http://localhost:6006/v1/traces",
     )
 

@@ -18,8 +18,6 @@ APPROVAL_PREFIX = "approval_data:"
 
 REDIS_URL = os.getenv("REDIS_URL", "redis://localhost:6379")
 
-# autouse=True hace que se aplique automáticamente a todos los tests de ese archivo, sin que tengas que agregarlo como argumento en cada función
-# fixture preparar algo que un test va a necesitar
 @pytest_asyncio.fixture(autouse=True)
 async def fresh_app_redis_client(monkeypatch):
     client = aioredis.from_url(
@@ -39,10 +37,7 @@ async def fresh_app_redis_client(monkeypatch):
 async def async_client(fresh_app_redis_client):
     transport = httpx.ASGITransport(app=main.app)
 
-    async with httpx.AsyncClient(
-        transport=transport,
-        base_url="http://test",
-    ) as client:
+    async with httpx.AsyncClient(transport=transport,base_url="http://test") as client:
         yield client
 
 @pytest_asyncio.fixture
@@ -57,21 +52,15 @@ async def redis_client():
         await connection.ping()
     except Exception as exc:
         await connection.aclose()
-        pytest.fail(
-            f"No se pudo conectar con Redis en {REDIS_URL}: {exc}"
-        )
+        pytest.fail(f"No se pudo conectar con Redis en {REDIS_URL}: {exc}")
 
     try:
         yield connection
     finally:
         await connection.aclose()
 
-# marcar test de funcion asincronica. No es lo mismo que el anterior
 @pytest.mark.asyncio
-async def test_process_persiste_estado_y_encola_tarea(
-    redis_client,
-    async_client,
-):
+async def test_process_persiste_estado_y_encola_tarea(redis_client,async_client):
     response = await async_client.post(
         "/process",
         json={"query": "Explicá qué es la media."},
@@ -105,10 +94,7 @@ async def test_process_persiste_estado_y_encola_tarea(
 
 
 @pytest.mark.asyncio
-async def test_status_recupera_estado_persistido(
-    redis_client,
-    async_client,
-):
+async def test_status_recupera_estado_persistido(redis_client, async_client):
     job_id = f"test-{uuid.uuid4()}"
     status_key = f"{STATUS_PREFIX}{job_id}"
 
@@ -126,9 +112,7 @@ async def test_status_recupera_estado_persistido(
     )
 
     try:
-        response = await async_client.get(
-            f"/status/{job_id}"
-        )
+        response = await async_client.get(f"/status/{job_id}")
 
         assert response.status_code == 200
         assert response.json() == task_data
@@ -146,18 +130,13 @@ async def test_status_devuelve_404_para_job_inexistente(
 
     await redis_client.delete(status_key)
 
-    response = await async_client.get(
-        f"/status/{job_id}"
-    )
+    response = await async_client.get(f"/status/{job_id}")
 
     assert response.status_code == 404
     assert response.json()["detail"] == "Job not found"
 
 @pytest.mark.asyncio
-async def test_approve_rechaza_tarea_que_no_espera_aprobacion(
-    redis_client,
-    async_client,
-):
+async def test_approve_rechaza_tarea_que_no_espera_aprobacion(redis_client, async_client):
     job_id = f"test-{uuid.uuid4()}"
     status_key = f"{STATUS_PREFIX}{job_id}"
     approval_key = f"{APPROVAL_PREFIX}{job_id}"
@@ -185,11 +164,8 @@ async def test_approve_rechaza_tarea_que_no_espera_aprobacion(
         )
 
         assert response.status_code == 400
-        assert response.json()["detail"] == (
-            "Job is not waiting for approval"
-        )
+        assert response.json()["detail"] == ("Job is not waiting for approval")
 
-        # No debe haberse guardado la aprobación.
         assert await redis_client.get(approval_key) is None
 
         # No debe haberse agregado el trabajo a la cola.
@@ -206,15 +182,11 @@ async def test_approve_rechaza_tarea_que_no_espera_aprobacion(
 
 
 @pytest.mark.asyncio
-async def test_approve_devuelve_404_para_job_inexistente(
-    redis_client,
-    async_client,
-):
+async def test_approve_devuelve_404_para_job_inexistente(redis_client, async_client):
     job_id = f"missing-{uuid.uuid4()}"
     status_key = f"{STATUS_PREFIX}{job_id}"
     approval_key = f"{APPROVAL_PREFIX}{job_id}"
 
-    # Garantizamos que el trabajo no exista.
     await redis_client.delete(status_key, approval_key)
 
     try:
@@ -229,7 +201,6 @@ async def test_approve_devuelve_404_para_job_inexistente(
         assert response.status_code == 404
         assert response.json()["detail"] == "Job not found"
 
-        # No debe crearse información de aprobación.
         assert await redis_client.get(approval_key) is None
 
         # No debe agregarse el trabajo a la cola.
@@ -245,20 +216,14 @@ async def test_approve_devuelve_404_para_job_inexistente(
         await redis_client.lrem(APPROVAL_QUEUE, 0, job_id)
 
 @pytest.mark.asyncio
-async def test_process_rechaza_request_invalido_sin_crear_tarea(
-    redis_client,
-    async_client,
-):
+async def test_process_rechaza_request_invalido_sin_crear_tarea(redis_client, async_client):
     initial_queue_length = await redis_client.llen(QUEUE_NAME)
 
     initial_status_keys = set(
         await redis_client.keys(f"{STATUS_PREFIX}*")
     )
 
-    response = await async_client.post(
-        "/process",
-        json={},
-    )
+    response = await async_client.post("/process", json={})
 
     assert response.status_code == 422
 

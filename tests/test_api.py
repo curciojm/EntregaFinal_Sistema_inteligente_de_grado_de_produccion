@@ -30,13 +30,11 @@ def test_create_task():
     fake_redis.set.assert_awaited_once()
     fake_redis.rpush.assert_awaited_once()
 
-    # Verificar que se encoló el job en la cola correcta
     args = fake_redis.rpush.await_args.args
 
     assert args[0] == "multiagent_tasks"
     assert args[1] == data["job_id"]
 
-    # Verificar que se guardó el estado inicial
     set_args = fake_redis.set.await_args.args
 
     assert set_args[0].startswith("task_status:")
@@ -114,7 +112,6 @@ def test_approve_task_encola_aprobacion_valida():
         "status": "approval_submitted",
     }
 
-    # Verifica que se guardó la decisión.
     fake_redis.set.assert_awaited_once()
 
     set_args = fake_redis.set.await_args.args
@@ -128,7 +125,6 @@ def test_approve_task_encola_aprobacion_valida():
         "feedback": "La respuesta es correcta.",
     }
 
-    # Verifica que se encoló la aprobación.
     fake_redis.rpush.assert_awaited_once_with(
         "multiagent_approvals",
         job_id,
@@ -163,6 +159,5 @@ def test_approve_task_rechaza_tarea_que_no_espera_aprobacion():
         "Job is not waiting for approval"
     )
 
-    # No debe registrar ni encolar la aprobación.
     fake_redis.set.assert_not_awaited()
     fake_redis.rpush.assert_not_awaited()

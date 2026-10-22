@@ -31,7 +31,6 @@ def test_evaluacion_con_aprobacion_humana():
     la evaluación.
     """
 
-    # 1. Crear la tarea.
     response = httpx.post(
         f"{BASE_URL}/process",
         json={"query": consulta},
@@ -46,7 +45,6 @@ def test_evaluacion_con_aprobacion_humana():
     estado = None
     aprobaciones_enviadas = 0
 
-    # 2. Esperar la intervención humana y completar el proceso.
     while time.monotonic() < deadline:
         response = httpx.get(
             f"{BASE_URL}/status/{job_id}",
@@ -57,7 +55,6 @@ def test_evaluacion_con_aprobacion_humana():
         estado = tarea["status"]
 
         if estado == "waiting_approval":
-            # El grafo llegó al nodo human_approval.
             response = httpx.post(
                 f"{BASE_URL}/approve/{job_id}",
                 json={
@@ -82,17 +79,13 @@ def test_evaluacion_con_aprobacion_humana():
 
         time.sleep(POLL_INTERVAL_SECONDS)
 
-    # 3. Verificar que la tarea haya finalizado.
     assert estado == "completed", (
         f"La tarea no terminó dentro de {TIMEOUT_SECONDS} segundos. "
         f"Último estado: {estado}"
     )
 
-    assert aprobaciones_enviadas >= 1, (
-        "La tarea terminó sin pasar por la aprobación humana."
-    )
+    assert aprobaciones_enviadas >= 1, ("La tarea terminó sin pasar por la aprobación humana.")
 
-    # 4. Comprobar que el resultado contiene una evaluación.
     resultado = tarea.get("result")
     assert resultado, "La tarea terminó sin resultado."
 

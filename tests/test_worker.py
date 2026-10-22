@@ -28,14 +28,11 @@ async def test_procesar_aprobacion_marca_failed_si_falla_el_grafo():
 
     fake_redis = AsyncMock()
 
-    # GET del estado de la tarea
-    # GET de la aprobación
     fake_redis.get.side_effect = [
         json.dumps(task_data),
         json.dumps(approval_data),
     ]
 
-    # Mock del grafo: falla al intentar continuar
     fake_app = AsyncMock()
     fake_app.ainvoke.side_effect = Exception(
         "Error simulado del grafo"
@@ -50,7 +47,6 @@ async def test_procesar_aprobacion_marca_failed_si_falla_el_grafo():
             fake_app,
         )
 
-    # Verificamos que se actualizó el estado a failed
     llamadas_set = fake_redis.set.await_args_list
 
     ultima_llamada = llamadas_set[-1]
@@ -65,7 +61,6 @@ async def test_procesar_aprobacion_marca_failed_si_falla_el_grafo():
     assert datos_guardados["result"] is None
     assert datos_guardados["error"] == "Error simulado del grafo"
 
-    # Verificamos que efectivamente se intentó ejecutar el grafo
     fake_app.ainvoke.assert_awaited_once()
 
 @pytest.mark.asyncio
@@ -83,13 +78,12 @@ async def test_main_worker_completa_tarea_exitosamente():
 
     respuesta = "La media es el promedio aritmético."
 
-    # Simula Redis: entrega una tarea y luego deja
-    # las colas vacías.
+
     fake_redis = AsyncMock()
     fake_redis.lpop.side_effect = [
-        job_id,  # Cola de tareas
-        None,    # Cola de tareas en la siguiente vuelta
-        None,    # Cola de aprobaciones
+        job_id,
+        None,
+        None,
     ]
     fake_redis.get.return_value = json.dumps(task_data)
 
@@ -134,10 +128,8 @@ async def test_main_worker_completa_tarea_exitosamente():
         with pytest.raises(StopWorker):
             await main_worker()
 
-    # El grafo debe haberse ejecutado una sola vez.
     fake_app.ainvoke.assert_awaited_once()
 
-    # Se guardan dos estados: processing y completed.
     assert fake_redis.set.await_count == 2
 
     ultimo_set = fake_redis.set.await_args_list[-1]
@@ -268,14 +260,12 @@ async def test_procesar_aprobacion_completa_tarea_exitosamente():
     ):
         await procesar_aprobacion(job_id, fake_app)
 
-    # La intervención humana queda registrada.
     guardar_evento.assert_awaited_once_with(
         job_id=job_id,
         decision="approve",
         feedback="La respuesta es correcta.",
     )
 
-    # Se reanuda el grafo con el identificador de la tarea.
     fake_app.ainvoke.assert_awaited_once()
 
     args, kwargs = fake_app.ainvoke.await_args
@@ -286,7 +276,6 @@ async def test_procesar_aprobacion_completa_tarea_exitosamente():
     }
     assert kwargs["config"]["configurable"]["thread_id"] == job_id
 
-    # Se persiste la traza y el resultado final.
     guardar_traza.assert_called_once()
 
     ultimo_set = fake_redis.set.await_args_list[-1]
@@ -297,13 +286,9 @@ async def test_procesar_aprobacion_completa_tarea_exitosamente():
     assert estado_final["result"] == respuesta
     assert estado_final["error"] is None
 
-    # Se elimina la aprobación ya procesada y los eventos temporales.
-    fake_redis.delete.assert_any_await(
-        f"approval_data:{job_id}"
-    )
-    fake_redis.delete.assert_any_await(
-        f"human_events:{job_id}"
-    )
+
+    fake_redis.delete.assert_any_await(f"approval_data:{job_id}")
+    fake_redis.delete.assert_any_await(f"human_events:{job_id}")
 
 @pytest.mark.asyncio
 async def test_procesar_aprobacion_no_hace_nada_si_job_no_existe():
@@ -395,14 +380,12 @@ async def test_procesar_aprobacion_vuelve_a_esperar_aprobacion():
     ):
         await procesar_aprobacion(job_id, fake_app)
 
-    # Se registra la intervención humana.
     guardar_evento.assert_awaited_once_with(
         job_id=job_id,
         decision="reject",
         feedback="La respuesta necesita una corrección.",
     )
 
-    # La tarea vuelve a quedar esperando aprobación.
     ultimo_set = fake_redis.set.await_args_list[-1]
     estado_final = json.loads(ultimo_set.args[1])
 
@@ -411,12 +394,8 @@ async def test_procesar_aprobacion_vuelve_a_esperar_aprobacion():
     assert estado_final["result"] is None
     assert estado_final["error"] is None
 
-    # Se elimina la aprobación ya procesada.
-    fake_redis.delete.assert_awaited_once_with(
-        f"approval_data:{job_id}"
-    )
+    fake_redis.delete.assert_awaited_once_with(f"approval_data:{job_id}")
 
-    # El grafo debe haberse reanudado una vez.
     fake_app.ainvoke.assert_awaited_once()
 
 
@@ -462,7 +441,6 @@ async def test_procesar_aprobacion_falla_si_no_puede_guardar_evento_humano():
         feedback="La respuesta es correcta.",
     )
 
-    # El error debe quedar registrado en el estado de la tarea.
     ultimo_set = fake_redis.set.await_args_list[-1]
     estado_final = json.loads(ultimo_set.args[1])
 
@@ -471,11 +449,8 @@ async def test_procesar_aprobacion_falla_si_no_puede_guardar_evento_humano():
     assert estado_final["result"] is None
     assert estado_final["error"] == "Redis no disponible"
 
-    # El grafo no debe reanudarse si falla el registro humano.
     fake_app.ainvoke.assert_not_awaited()
 
-    # La aprobación no se elimina, porque el error ocurrió antes
-    # de llegar al borrado que está dentro del try.
     fake_redis.delete.assert_not_awaited()
 
 
@@ -494,9 +469,9 @@ async def test_main_worker_marca_failed_si_falla_el_grafo():
 
     fake_redis = AsyncMock()
     fake_redis.lpop.side_effect = [
-        job_id,  # Primera consulta: entrega la tarea
-        None,    # Segunda consulta: cola de tareas vacía
-        None,    # Tercera consulta: cola de aprobaciones vacía
+        job_id,
+        None,
+        None,
     ]
     fake_redis.get.return_value = json.dumps(task_data)
 
@@ -538,7 +513,6 @@ async def test_main_worker_marca_failed_si_falla_el_grafo():
 
     fake_app.ainvoke.assert_awaited_once()
 
-    # Se guarda el estado processing y luego failed.
     assert fake_redis.set.await_count == 2
 
     ultimo_set = fake_redis.set.await_args_list[-1]
@@ -557,9 +531,9 @@ async def test_main_worker_ignora_tarea_que_no_existe_en_redis():
 
     fake_redis = AsyncMock()
     fake_redis.lpop.side_effect = [
-        job_id,  # Se obtiene el ID de la cola
-        None,    # La cola de tareas queda vacía
-        None,    # La cola de aprobaciones queda vacía
+        job_id,
+        None, 
+        None,
     ]
     fake_redis.get.return_value = None
 
@@ -596,13 +570,8 @@ async def test_main_worker_ignora_tarea_que_no_existe_en_redis():
         with pytest.raises(StopWorker):
             await main_worker()
 
-    # Se consultó el estado de la tarea inexistente.
-    fake_redis.get.assert_awaited_once_with(
-        f"task_status:{job_id}"
-    )
+    fake_redis.get.assert_awaited_once_with(f"task_status:{job_id}")
 
-    # No se intentó ejecutar el grafo ni actualizar el estado.
-    # esto es un assert async
     fake_app.ainvoke.assert_not_awaited()
     fake_redis.set.assert_not_awaited()
 
@@ -614,15 +583,13 @@ async def test_main_worker_ignora_aprobacion_de_job_inexistente():
 
     fake_redis = AsyncMock()
 
-    # Primero no hay tareas; después aparece una aprobación.
     fake_redis.lpop.side_effect = [
-        None,       # Cola de tareas
-        job_id,     # Cola de aprobaciones
-        None,       # Cola de tareas en la siguiente vuelta
-        None,       # Cola de aprobaciones en la siguiente vuelta
+        None,
+        job_id,
+        None,
+        None,
     ]
 
-    # El job no existe en Redis.
     fake_redis.get.return_value = None
 
     fake_app = AsyncMock()
@@ -658,10 +625,7 @@ async def test_main_worker_ignora_aprobacion_de_job_inexistente():
         with pytest.raises(StopWorker):
             await main_worker()
 
-    # Se consultó la aprobación, pero no se ejecutó el grafo.
-    fake_redis.get.assert_awaited_once_with(
-        f"task_status:{job_id}"
-    )
+    fake_redis.get.assert_awaited_once_with(f"task_status:{job_id}")
 
     fake_app.ainvoke.assert_not_awaited()
     fake_redis.set.assert_not_awaited()

@@ -13,7 +13,7 @@ class DocumentProcessor:
     def __init__(self, model_encoding: str = "cl100k_base"):
         self.tokenizer = tiktoken.get_encoding(model_encoding)
 
-        # Parametros establecidos a partir de la evaluación de la PreEntrega 4
+        # Parametros establecidos a partir de la evaluación de la PreEntrega 4, ver README.md
         self.splitter = RecursiveCharacterTextSplitter(
             chunk_size=400,
             chunk_overlap=100,
@@ -33,12 +33,8 @@ class DocumentProcessor:
     def calculate_tokens(self, text: str) -> int:
         return len(self.tokenizer.encode(text))
 
-    def process_document(
-        self,
-        documents: list[Document]
-    ) -> list[Document]:
+    def process_document(self, documents: list[Document]) -> list[Document]:
         """Limpieza, chunking y enriquecimiento de metadata."""
-
         processed_chunks = []
 
         for document in documents:
@@ -54,13 +50,9 @@ class DocumentProcessor:
 
         for i, chunk in enumerate(processed_chunks):
 
-            nombre_archivo = os.path.basename(
-                chunk.metadata["source"]
-            )
+            nombre_archivo = os.path.basename(chunk.metadata["source"])
 
-            nombre_sin_extension = os.path.splitext(
-                nombre_archivo
-            )[0]
+            nombre_sin_extension = os.path.splitext(nombre_archivo)[0]
 
             # La fuente y la categoría se obtienen del nombre del archivo, separadas por una coma.
             fuente, categoria = nombre_sin_extension.split(

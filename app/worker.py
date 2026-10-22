@@ -35,11 +35,7 @@ logger.info("Configurando Phoenix...")
 configurar_observabilidad()
 logger.info("Phoenix configurado correctamente.")
 
-async def guardar_evento_humano(
-    job_id: str,
-    decision: str,
-    feedback: str,
-):
+async def guardar_evento_humano(job_id: str, decision: str, feedback: str):
     """
     Guarda cada intervención humana en Redis.
 
@@ -62,9 +58,7 @@ async def guardar_evento_humano(
     )
 
 
-async def obtener_eventos_humanos(
-    job_id: str,
-) -> list[dict]:
+async def obtener_eventos_humanos(job_id: str) -> list[dict]:
     """
     Recupera todas las intervenciones humanas
     registradas para el job.
@@ -81,10 +75,7 @@ async def obtener_eventos_humanos(
         for evento in raw_events
     ]
 
-async def procesar_aprobacion(
-    job_id,
-    app,
-):
+async def procesar_aprobacion(job_id, app):
     key = f"{STATUS_PREFIX}{job_id}"
 
     raw_data = await redis_client.get(key)
@@ -380,7 +371,6 @@ async def main_worker():
                 continue
 
             await asyncio.sleep(1)
-
 
 if __name__ == "__main__":
     asyncio.run(main_worker())

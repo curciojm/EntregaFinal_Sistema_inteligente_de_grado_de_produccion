@@ -13,7 +13,7 @@ retriever_vectorial = vectorstore.as_retriever(
     search_kwargs={"k": 5},
 )
 
-# Los mejores resultados de Recall@5 y Precision@5 se obtuvieron con estos pesos (ver reporte, PreEntrega4).
+# Los mejores resultados de Recall@5 y Precision@5 se obtuvieron con estos pesos (ver README.md).
 retriever_hibrido = EnsembleRetriever(
     retrievers=[retriever_bm25, retriever_vectorial],
     weights=[0.25, 0.75],

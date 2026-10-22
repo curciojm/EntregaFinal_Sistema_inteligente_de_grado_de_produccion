@@ -21,10 +21,7 @@ async def test_process_crea_tarea_y_encola_sin_redis_real():
     with patch.object(main, "redis_client", mock_redis):
         transport = httpx.ASGITransport(app=main.app)
 
-        async with httpx.AsyncClient(
-            transport=transport,
-            base_url="http://test",
-        ) as client:
+        async with httpx.AsyncClient(transport=transport,base_url="http://test") as client:
             response = await client.post(
                 "/process",
                 json={"query": "¿Qué es una prueba de hipótesis?"},
@@ -96,18 +93,13 @@ async def test_status_devuelve_404_si_tarea_no_existe_mock():
     with patch.object(main, "redis_client", mock_redis):
         transport = httpx.ASGITransport(app=main.app)
 
-        async with httpx.AsyncClient(
-            transport=transport,
-            base_url="http://test",
-        ) as client:
+        async with httpx.AsyncClient(transport=transport,base_url="http://test") as client:
             response = await client.get(f"/status/{job_id}")
 
     assert response.status_code == 404
     assert response.json() == {"detail": "Job not found"}
 
-    mock_redis.get.assert_awaited_once_with(
-        f"task_status:{job_id}"
-    )
+    mock_redis.get.assert_awaited_once_with(f"task_status:{job_id}")
 
 @pytest.mark.asyncio
 async def test_approve_guarda_decision_y_encola_con_redis_mock():
@@ -127,10 +119,7 @@ async def test_approve_guarda_decision_y_encola_con_redis_mock():
     with patch.object(main, "redis_client", mock_redis):
         transport = httpx.ASGITransport(app=main.app)
 
-        async with httpx.AsyncClient(
-            transport=transport,
-            base_url="http://test",
-        ) as client:
+        async with httpx.AsyncClient(transport=transport,base_url="http://test") as client:
             response = await client.post(
                 f"/approve/{job_id}",
                 json={
@@ -172,10 +161,7 @@ async def test_approve_devuelve_404_si_tarea_no_existe_mock():
     with patch.object(main, "redis_client", mock_redis):
         transport = httpx.ASGITransport(app=main.app)
 
-        async with httpx.AsyncClient(
-            transport=transport,
-            base_url="http://test",
-        ) as client:
+        async with httpx.AsyncClient(transport=transport, base_url="http://test") as client:
             response = await client.post(
                 f"/approve/{job_id}",
                 json={
@@ -187,9 +173,7 @@ async def test_approve_devuelve_404_si_tarea_no_existe_mock():
     assert response.status_code == 404
     assert response.json() == {"detail": "Job not found"}
 
-    mock_redis.get.assert_awaited_once_with(
-        f"task_status:{job_id}"
-    )
+    mock_redis.get.assert_awaited_once_with(f"task_status:{job_id}")
     mock_redis.set.assert_not_awaited()
     mock_redis.rpush.assert_not_awaited()
 
@@ -211,10 +195,7 @@ async def test_approve_rechaza_tarea_fuera_de_estado_mock():
     with patch.object(main, "redis_client", mock_redis):
         transport = httpx.ASGITransport(app=main.app)
 
-        async with httpx.AsyncClient(
-            transport=transport,
-            base_url="http://test",
-        ) as client:
+        async with httpx.AsyncClient(transport=transport,base_url="http://test") as client:
             response = await client.post(
                 f"/approve/{job_id}",
                 json={
@@ -224,13 +205,9 @@ async def test_approve_rechaza_tarea_fuera_de_estado_mock():
             )
 
     assert response.status_code == 400
-    assert response.json() == {
-        "detail": "Job is not waiting for approval"
-    }
+    assert response.json() == {"detail": "Job is not waiting for approval"}
 
-    mock_redis.get.assert_awaited_once_with(
-        f"task_status:{job_id}"
-    )
+    mock_redis.get.assert_awaited_once_with(f"task_status:{job_id}")
     mock_redis.set.assert_not_awaited()
     mock_redis.rpush.assert_not_awaited()
 
@@ -247,10 +224,7 @@ async def test_process_falla_si_redis_no_puede_guardar():
             raise_app_exceptions=False,
         )
 
-        async with httpx.AsyncClient(
-            transport=transport,
-            base_url="http://test",
-        ) as client:
+        async with httpx.AsyncClient(transport=transport, base_url="http://test") as client:
             response = await client.post(
                 "/process",
                 json={"query": "¿Qué es una prueba de hipótesis?"},

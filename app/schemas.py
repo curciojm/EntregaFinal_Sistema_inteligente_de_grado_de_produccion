@@ -20,12 +20,7 @@ class AgentState(MessagesState):
     revision_humana: bool
 
     next_agent: Optional[str]
-    # operator.add de Python, que en este caso permite concatenar listas
-    # LangGraph combina ambas y queda por ej:
-    # #[
-    # {"agente": "profesor", "contenido": "Definición de media"},
-    # {"agente": "evaluador", "contenido": "La respuesta es correcta"}
-    # ]
+
     contribuciones: Annotated[List[Dict[str, str]], add]
 
     pasos: int
@@ -50,7 +45,6 @@ class DecisionSupervisor(BaseModel):
         description="Breve justificación de la decisión."
     )
 
-# deberia limitarse los outputs tambien, pero en el llm ya hice: max_tokens=500, Si solo usás max_tokens, no hay garantía de que la salida respete el esquema
 class ResultadoConcepto(BaseModel):
 
     contenido: str = Field(
@@ -79,12 +73,10 @@ class ResultadoEvaluacion(BaseModel):
             "Cómo puede mejorar su respuesta. "
             "Si es Muy bien, indicar que no necesita mejoras."
         )
-        # si quisiera limitar seria: mejora: str = Field(max_length=500)
     )
 
 # Redis
 class TaskRequest(BaseModel):
-    # Limita los inputs!!!
     query: str = Field(min_length=1, max_length=500)
 
 class TaskStatus(str, Enum):
