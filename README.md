@@ -278,7 +278,7 @@ Ejemplo de solicitud:
 
 ```json
 {
-  "query": "Quiero que evalúes mi respuesta sobre la correlación."
+  "query": "Quiero que evalúes mi respuesta sobre la correlación. La correlación es..."
 }
 ```
 
@@ -518,6 +518,10 @@ También se incorporó una alternativa mediante un script de shell para Linux. S
 6. Si el estado es `waiting_approval`, enviar una decisión mediante `POST /approve/{job_id}`, reemplazando `{job_id}` por el identificador de la tarea.
 7. Consultar nuevamente el estado hasta obtener el resultado final.
 8. Inspeccionar la ejecución en Phoenix y revisar la traza JSON correspondiente.
+
+### Video ejemplo
+
+[Ver video de ejemplo](https://drive.google.com/file/d/1KVr_MlY7GyNQnINE-KtGg30BUCunMZRB/view?usp=sharing)
 
 ## Tecnologías utilizadas
 
