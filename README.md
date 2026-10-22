@@ -375,27 +375,31 @@ El proyecto incluye una suite de tests automatizados para verificar componentes 
 
 La suite se ejecutó con éxito en el entorno de desarrollo: **39 tests ejecutados correctamente**.
 
-**Importante:** antes de ejecutar los tests, es necesario iniciar la aplicación con `run.sh`. Algunos tests requieren que los servicios reales estén disponibles, por lo que no alcanza con ejecutar la suite de manera aislada.
+**Importante:** antes de ejecutar los tests, es necesario instalar las dependencias de desarrollo e iniciar la aplicación con `run.sh`. Algunos tests requieren que los servicios reales estén disponibles, por lo que no alcanza con ejecutar la suite de manera aislada.
 
 ### Procedimiento de ejecución
 
 1. Abrir una terminal en la carpeta raíz del proyecto.
-2. Iniciar la aplicación ejecutando `run.sh`.
-3. Esperar a que Redis, Phoenix, FastAPI y el Worker estén disponibles.
-4. Mantener esa terminal abierta mientras se ejecutan las pruebas.
-5. Abrir una segunda terminal, activar el entorno virtual y ejecutar los tests.
+2. Activar el entorno virtual.
+3. Instalar las dependencias necesarias para testing:
 
-Comando para iniciar la aplicación:
+   ```bash
+   python -m pip install -r requirements-dev.txt
+   ```
 
-```bash
-bash run.sh
-```
+4. Iniciar la aplicación ejecutando `run.sh`:
 
-En una segunda terminal, ejecutar:
+   ```bash
+   bash run.sh
+   ```
 
-```bash
-python -m pytest -v
-```
+5. Esperar a que Redis, Phoenix, FastAPI y el Worker estén disponibles.
+6. Mantener esa terminal abierta mientras se ejecutan las pruebas.
+7. Abrir una segunda terminal, activar el mismo entorno virtual y ejecutar los tests:
+
+   ```bash
+   python -m pytest -v
+   ```
 
 Al finalizar los tests, la aplicación puede detenerse con `Ctrl+C` en la terminal donde se ejecuta `run.sh`. Redis y Phoenix permanecen ejecutándose en Docker y pueden detenerse por separado cuando sea necesario.
 
