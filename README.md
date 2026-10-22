@@ -616,6 +616,11 @@ Las principales decisiones de diseño son:
 - Automatizar pruebas mediante una suite de tests.
 - Automatizar el inicio de los servicios y procesos mediante `run.sh`.
 
-## Uso de herramientas de asistencia
+## Sobre el código
 
-Durante el desarrollo se consultaron materiales del curso, código proporcionado por el profesor como guía, documentación técnica y recursos disponibles en Internet. También se utilizó ChatGPT como apoyo para resolver dudas conceptuales, revisar implementaciones y depurar problemas durante el desarrollo.
+El proyecto fue desarrollado tomando como referencia:
+
+* Código y ejemplos proporcionados por el profesor como guía.
+* Ejemplos y contenidos incluidos en el temario de la plataforma sobre agentes, LangGraph, herramientas, RAG y sistemas multi-agente.
+* Documentación oficial y recursos disponibles en Internet.
+* ChatGPT como herramienta de asistencia durante el desarrollo.
