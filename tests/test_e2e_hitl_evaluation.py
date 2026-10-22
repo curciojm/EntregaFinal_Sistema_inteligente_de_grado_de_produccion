@@ -4,7 +4,6 @@ import time
 import httpx
 import pytest
 
-
 BASE_URL = "http://127.0.0.1:8000"
 TIMEOUT_SECONDS = 180
 POLL_INTERVAL_SECONDS = 2

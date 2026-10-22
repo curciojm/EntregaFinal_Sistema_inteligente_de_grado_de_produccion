@@ -3,7 +3,13 @@ import asyncio
 from langchain_pinecone import PineconeVectorStore
 from pinecone import Pinecone, ServerlessSpec
 
-from app.db_config import DIMENSIONS, EMBEDDINGS, INDEX_NAME, NAMESPACE, PINECONE_API_KEY
+from app.db_config import (
+    DIMENSIONS,
+    EMBEDDINGS,
+    INDEX_NAME,
+    NAMESPACE,
+    PINECONE_API_KEY,
+)
 from app.setup import procesamiento_desde_pdfs, recuperar_documentos_de_pinecone
 
 

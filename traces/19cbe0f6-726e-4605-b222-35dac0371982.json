@@ -1,0 +1,21 @@
+[
+  {
+    "tipo": "HumanMessage",
+    "contenido": "\n    Quiero que evalúes la siguiente respuesta de un estudiante.\n\n    Pregunta: ¿Qué es la correlación?\n\n    Respuesta del estudiante:\n    \"La correlacion consiste en el calculo de un promedio entre dos grupos distintos \"\n    \"para ver que grupo tiene mayor promedio\"\n\n    Indicá si la respuesta es correcta y justificá brevemente\n    la evaluación.\n    "
+  },
+  {
+    "tipo": "AIMessage",
+    "contenido": "Evaluación: Incompleta\n\nLa respuesta del estudiante es incorrecta porque confunde la correlación con la comparación de promedios entre grupos distintos. La correlación no mide diferencias entre grupos mediante medias, sino que se centra en analizar la dirección y el grado o magnitud de la relación entre dos o más variables cuantitativas medidas en una misma muestra.\n\nPara comprender mejor este concepto, podés consultar la obra de *Pagano (2006), Estadística para las ciencias del comportamiento* (por ejemplo, en el capítulo 6, páginas 9 y 23), donde se aborda en detalle el análisis de la correlación y los coeficientes de correlación.\n\n### Ejemplo conceptual\n\nPara ilustrar qué es realmente una correlación, consideremos un estudio donde se miden dos variables en los mismos participantes:\n- **Variable X:** Nivel de ansiedad (medido en una escala numérica).\n- **Variable Y:** Frecuencia de palabras recordadas en una prueba de memoria.\n\nUn análisis de correlación no busca comparar el promedio de un grupo con el de otro, sino examinar si, a medida que aumentan o disminuyen los niveles de ansiedad (variable X), la cantidad de palabras recordadas (variable Y) cambia de manera sistemática. El coeficiente de correlación indicará la fuerza y la dirección (positiva o negativa) de dicha relación entre ambas variables.",
+    "agente": "evaluador"
+  },
+  {
+    "tipo": "AIMessage",
+    "contenido": "**Evaluación: Incorrecta**\n\nLa respuesta del estudiante es incorrecta porque confunde el concepto de correlación con la comparación de medias. \n\n* **Por qué es incorrecta:** La correlación no consiste en calcular promedios para comparar grupos, sino en analizar el grado y la dirección de la relación entre dos o más variables medidas en una misma muestra. \n* **Ejemplo conceptual:** Un análisis de correlación evaluaría, por ejemplo, si a medida que aumenta el nivel de ansiedad de una persona (Variable X), cambia de forma sistemática su puntuación en una prueba de memoria (Variable Y), sin comparar grupos diferentes.",
+    "agente": "sintesis"
+  },
+  {
+    "tipo": "HumanApproval",
+    "decision": "approve",
+    "feedback": "Continuá con la evaluación de la respuesta agrega un ejemplo que involucre niveles de ansiedad y frecuencia de palabras recordadas"
+  }
+]

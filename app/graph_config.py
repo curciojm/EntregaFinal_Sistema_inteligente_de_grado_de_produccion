@@ -1,12 +1,12 @@
 from typing import Literal
 
-from langgraph.graph import StateGraph, START, END
+from langgraph.graph import END, START, StateGraph
 
-from app.hitl import human_approval
-from app.agents.profesor import nodo_profesor
-from app.agents.supervisor import nodo_supervisor
 from app.agents.evaluador import nodo_evaluador
+from app.agents.profesor import nodo_profesor
 from app.agents.sintesis import nodo_sintesis
+from app.agents.supervisor import nodo_supervisor
+from app.hitl import human_approval
 from app.schemas import AgentState
 
 

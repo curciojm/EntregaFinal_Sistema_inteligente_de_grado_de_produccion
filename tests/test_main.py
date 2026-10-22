@@ -8,8 +8,8 @@
 import json
 from unittest.mock import AsyncMock, patch
 
-import pytest
 import httpx
+import pytest
 
 import app.main as main
 

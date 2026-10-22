@@ -3,7 +3,6 @@ from app.logging_config import logger
 from app.models import get_model
 from app.schemas import AgentState, DecisionSupervisor
 
-
 MAX_PASOS = 6
 
 SUPERVISOR_PROMPT = """Sos el Supervisor de un equipo con dos especialistas:

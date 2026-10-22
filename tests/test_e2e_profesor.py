@@ -2,9 +2,8 @@ import os
 import time
 import uuid
 
-import pytest
 import httpx
-
+import pytest
 
 BASE_URL = os.getenv(
     "TEST_BASE_URL",

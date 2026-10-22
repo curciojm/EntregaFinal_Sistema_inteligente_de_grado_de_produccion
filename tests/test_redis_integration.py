@@ -4,12 +4,13 @@
 import json
 import os
 import uuid
-import app.main as main
-import pytest_asyncio
 
 import httpx
 import pytest
+import pytest_asyncio
 from redis import asyncio as aioredis
+
+import app.main as main
 
 QUEUE_NAME = "multiagent_tasks"
 STATUS_PREFIX = "task_status:"

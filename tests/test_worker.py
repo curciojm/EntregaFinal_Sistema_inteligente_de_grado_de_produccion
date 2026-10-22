@@ -1,11 +1,10 @@
 import json
 from unittest.mock import AsyncMock, patch
-from langchain_core.messages import HumanMessage
-from app.worker import main_worker
 
 import pytest
+from langchain_core.messages import HumanMessage
 
-from app.worker import procesar_aprobacion
+from app.worker import main_worker, procesar_aprobacion
 
 
 @pytest.mark.asyncio

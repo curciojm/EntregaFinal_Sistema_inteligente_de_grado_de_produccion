@@ -1,0 +1,14 @@
+
+-r requirements.txt
+
+# Testing
+pytest==9.1.1
+pytest-asyncio==1.4.0
+pytest-cov==7.1.0
+pytest-mock==3.16.0
+
+# Linting y calidad de código
+ruff==0.17.1
+
+# Compatibilidad y utilidades de desarrollo en Windows
+pywin32==312; sys_platform == "win32"

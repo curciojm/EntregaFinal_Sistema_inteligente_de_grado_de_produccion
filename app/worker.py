@@ -1,6 +1,6 @@
-import os
 import asyncio
 import json
+import os
 
 from langchain_core.messages import HumanMessage
 from langgraph.checkpoint.redis.aio import AsyncRedisSaver
@@ -11,8 +11,6 @@ from app.graph_config import grafo
 from app.logging_config import logger
 from app.observability import configurar_observabilidad
 from app.trace_utils import guardar_traza, serializar_traza
-
-
 
 # Si la variable no esta disponible, toma la segunda
 REDIS_URL = os.getenv("REDIS_URL", "redis://localhost:6379")

@@ -1,12 +1,11 @@
 from langchain.agents import create_agent
 from langchain_core.messages import AIMessage, HumanMessage
 
-from app.models import get_model
-from app.logging_config import logger
 from app.errors import classify_error
+from app.logging_config import logger
+from app.models import get_model
 from app.schemas import AgentState
 from app.tools import buscar_concepto, buscar_fuente
-
 
 PROFESOR_PROMPT = """
 Sos un profesor universitario especializado en metodología
