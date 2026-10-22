@@ -373,7 +373,7 @@ La información de error queda disponible al consultar `GET /status/{job_id}`.
 
 El proyecto incluye una suite de tests automatizados para verificar componentes de la API, el Worker y otras funcionalidades cubiertas por los casos de prueba.
 
-La suite se ejecutó con éxito en el entorno de desarrollo: **40 tests ejecutados correctamente**.
+La suite se ejecutó con éxito en el entorno de desarrollo: **39 tests ejecutados correctamente**.
 
 **Importante:** antes de ejecutar los tests, es necesario iniciar la aplicación con `run.sh`. Algunos tests requieren que los servicios reales estén disponibles, por lo que no alcanza con ejecutar la suite de manera aislada.
 

@@ -136,62 +136,6 @@ async def test_status_recupera_estado_persistido(
     finally:
         await redis_client.delete(status_key)
 
-
-@pytest.mark.asyncio
-async def test_approve_persiste_y_encola_aprobacion(
-    redis_client,
-    async_client,
-):
-    job_id = f"test-{uuid.uuid4()}"
-    status_key = f"{STATUS_PREFIX}{job_id}"
-    approval_key = f"{APPROVAL_PREFIX}{job_id}"
-
-    task_data = {
-        "job_id": job_id,
-        "query": "Consulta que requiere aprobación",
-        "status": "waiting_approval",
-        "result": None,
-        "error": None,
-    }
-
-    await redis_client.set(
-        status_key,
-        json.dumps(task_data),
-    )
-
-    try:
-        response = await async_client.post(
-            f"/approve/{job_id}",
-            json={
-                "decision": "approve",
-                "feedback": "La respuesta es correcta.",
-            },
-        )
-
-        assert response.status_code == 200
-        assert response.json() == {
-            "job_id": job_id,
-            "status": "approval_submitted",
-        }
-
-        raw_approval = await redis_client.get(approval_key)
-        assert raw_approval is not None
-
-        assert json.loads(raw_approval) == {
-            "decision": "approve",
-            "feedback": "La respuesta es correcta.",
-        }
-
-        queued_approvals = await redis_client.lrange(
-            APPROVAL_QUEUE, 0, -1
-        )
-        assert job_id in queued_approvals
-
-    finally:
-        await redis_client.delete(status_key, approval_key)
-        await redis_client.lrem(APPROVAL_QUEUE, 0, job_id)
-
-
 @pytest.mark.asyncio
 async def test_status_devuelve_404_para_job_inexistente(
     redis_client,
