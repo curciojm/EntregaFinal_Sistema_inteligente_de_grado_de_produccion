@@ -519,10 +519,6 @@ También se incorporó una alternativa mediante un script de shell para Linux. S
 7. Consultar nuevamente el estado hasta obtener el resultado final.
 8. Inspeccionar la ejecución en Phoenix y revisar la traza JSON correspondiente.
 
-### Demostración del Human-in-the-Loop
-
-El siguiente video muestra el flujo de interacción con el mecanismo de aprobación humana (Human-in-the-Loop), desde la solicitud de aprobación hasta la continuación de la ejecución.
-
 ## Tecnologías utilizadas
 
 - Python
